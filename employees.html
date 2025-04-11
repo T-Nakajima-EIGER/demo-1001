@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 社員マスタ</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            font-size: 18px;
+            font-weight: 500;
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            padding: 0;
+            background-color: white;
+        }
+
+        .user-dashboard-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 25px 0 15px 0;
+            padding-left: 20px;
+            color: #4a4a4a;
+        }
+
+        /* テーブル */
+        .content-section {
+            margin: 0 20px 30px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            background-color: #f7f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header h5 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 10px;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* アクションボタン */
+        .action-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--primary-color);
+            padding: 5px;
+            margin-right: 5px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary-hover);
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="#" class="header-logo">工事進捗管理ツール</a>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="社員を検索...">
+            </div>
+            <div class="header-right">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row g-0">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="true">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse show" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2 active" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 main-content">
+                <h4 class="user-dashboard-title">社員マスタ</h4>
+
+                <!-- 機能ボタン -->
+                <div class="d-flex justify-content-between align-items-center px-3 py-3">
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary me-2">
+                            <i class="fas fa-upload me-1"></i>インポート
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download me-1"></i>エクスポート
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i>新規登録
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 社員リスト -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h5>社員一覧</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>社員番号</th>
+                                    <th>社員氏名</th>
+                                    <th>調達カテゴリー</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>101</td>
+                                    <td>田中 太郎</td>
+                                    <td>アルミ</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>102</td>
+                                    <td>佐藤 花子</td>
+                                    <td>ゴム</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>103</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>鉄</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>104</td>
+                                    <td>高橋 誠</td>
+                                    <td>レアメタル</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>105</td>
+                                    <td>山本 健太</td>
+                                    <td>アルミ</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>106</td>
+                                    <td>伊藤 美咲</td>
+                                    <td>銅</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>107</td>
+                                    <td>中村 大輔</td>
+                                    <td>ゴム</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>108</td>
+                                    <td>小林 和子</td>
+                                    <td>鉄</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>109</td>
+                                    <td>加藤 隆</td>
+                                    <td>プラスチック</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>110</td>
+                                    <td>吉田 真央</td>
+                                    <td>レアメタル</td>
+                                    <td>
+                                        <button class="action-btn" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn" title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ページネーション -->
+                <div class="d-flex justify-content-center my-4">
+                    <nav aria-label="ページナビゲーション">
+                        <ul class="pagination">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="前">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#" aria-label="次">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // モバイルのサイドバー切り替え
+            $('#sidebar-toggle').click(function () {
+                $('#sidebar').toggleClass('show');
+            });
+
+            // ウィンドウサイズが変更されたときにモバイルメニューを処理
+            $(window).resize(function () {
+                if ($(window).width() > 768) {
+                    $('#sidebar').removeClass('show');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html> 

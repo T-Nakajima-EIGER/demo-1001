@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 工事台帳詳細</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .construction-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        /* タブ */
+        .custom-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .custom-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .custom-tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .custom-tab:hover:not(.active) {
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* カード */
+        .info-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .info-card-header {
+            background-color: var(--table-header-bg);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .info-card-body {
+            padding: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+            padding-right: 15px;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* ステータス */
+        .status-chip {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-draft {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .status-in-progress {
+            background-color: #e1f0f9;
+            color: #3987b9;
+        }
+
+        .status-completed {
+            background-color: #e5f5eb;
+            color: #2d8659;
+        }
+
+        /* サマリーカード */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .summary-card-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .summary-card-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* テーブル */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* 進捗バー */
+        .progress-container {
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .progress-title {
+            font-weight: 500;
+        }
+
+        .progress-percentage {
+            color: #6c757d;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 最近の活動 */
+        .activity-list {
+            margin-top: 15px;
+        }
+
+        .activity-item {
+            display: flex;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: #6c757d;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }
+
+        .activity-user {
+            font-weight: 500;
+        }
+
+        .activity-time {
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .activity-description {
+            color: #4a4a4a;
+        }
+
+        /* リスト */
+        .feature-list {
+            margin-top: 10px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .feature-item:hover {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 500;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .feature-description {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .feature-action {
+            margin-left: 10px;
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .info-item {
+                width: 100%;
+            }
+
+            .summary-card {
+                min-width: 100%;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+
+            .info-item {
+                width: 33.333%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳詳細</h4>
+
+                <div class="section-header px-3 py-3">
+                    <h5 class="section-title">XXXXX会社のXXXXX工事（案件ID: PRJ-2025-0042）</h5>
+                    <div class="action-buttons">
+                        <a href="#" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> 一覧へ戻る
+                        </a>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i> 編集
+                        </a>
+                    </div>
+                </div>
+
+                <div class="content-container">
+                    <!-- タブメニュー -->
+                    <div class="custom-tabs">
+                        <div class="custom-tab active" data-tab="overview" onclick="location.href='construction_detail.html'">概要</div>
+                        <div class="custom-tab" data-tab="tasks" onclick="location.href='construction_detail_tasks.html'">タスク</div>
+                        <div class="custom-tab" data-tab="workflows" onclick="location.href='construction_detail_workflows.html'">ワークフロー</div>
+                        <div class="custom-tab" data-tab="materials" onclick="location.href='construction_detail_materials.html'">材料調達</div>
+                        <div class="custom-tab" data-tab="documents" onclick="location.href='construction_detail_documents.html'">資料</div>
+                        <div class="custom-tab" data-tab="wbs" onclick="location.href='construction_detail_wbs.html'">WBS</div>
+                    </div>
+
+                    <!-- 概要タブ -->
+                    <div class="tab-content active" id="overview-tab">
+                        <!-- サマリーカード -->
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-card-title">工事進捗率</div>
+                                <div class="summary-card-value">65%</div>
+                                <div class="summary-card-description">残り35日</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">受注金額</div>
+                                <div class="summary-card-value">¥12,500,000</div>
+                                <div class="summary-card-description">税込</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">予算消化率</div>
+                                <div class="summary-card-value">58%</div>
+                                <div class="summary-card-description">残り¥5,250,000</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-title">タスク完了率</div>
+                                <div class="summary-card-value">70%</div>
+                                <div class="summary-card-description">21/30 完了</div>
+                            </div>
+                        </div>
+
+                        <!-- 工事基本情報 -->
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                工事基本情報
+                            </div>
+                            <div class="info-card-body">
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">工事件名</div>
+                                        <div class="info-value">XXXXX会社のXXXXX工事</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">案件ID</div>
+                                        <div class="info-value">PRJ-2025-0042</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">ステータス</div>
+                                        <div class="info-value">
+                                            <span class="status-chip status-in-progress">工事中</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">受注年月日</div>
+                                        <div class="info-value">2025/01/10</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">引き渡し予定日</div>
+                                        <div class="info-value">2025/05/15</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">完成予定年月日</div>
+                                        <div class="info-value">2025/05/10</div>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">営業担当者</div>
+                                        <div class="info-value">山田 太郎</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">社員コード</div>
+                                        <div class="info-value">3832-23832</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">受注形態</div>
+                                        <div class="info-value">元請</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 受注情報 -->
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                受注情報
+                            </div>
+                            <div class="info-card-body">
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">受注先名称</div>
+                                        <div class="info-value">株式会社XXXXX</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">取引先コード</div>
+                                        <div class="info-value">C-20250001</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">受注金額（税込）</div>
+                                        <div class="info-value">¥12,500,000</div>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">受注番号</div>
+                                        <div class="info-value">138284342</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">請求伝票</div>
+                                        <div class="info-value">92348332</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">労災</div>
+                                        <div class="info-value">×</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 工事進捗状況 -->
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                工事進捗状況
+                            </div>
+                            <div class="info-card-body">
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">全体進捗</span>
+                                        <span class="progress-percentage">65%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 65%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">基礎工事</span>
+                                        <span class="progress-percentage">100%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">躯体工事</span>
+                                        <span class="progress-percentage">85%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">内装工事</span>
+                                        <span class="progress-percentage">40%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 40%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">設備工事</span>
+                                        <span class="progress-percentage">30%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 30%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="progress-container">
+                                    <div class="progress-label">
+                                        <span class="progress-title">外構工事</span>
+                                        <span class="progress-percentage">10%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 10%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 最近の活動 -->
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                最近の活動
+                            </div>
+                            <div class="info-card-body">
+                                <div class="activity-list">
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-tasks"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-header">
+                                                <span class="activity-user">佐藤 花子</span>
+                                                <span class="activity-time">2025/02/20 15:30</span>
+                                            </div>
+                                            <div class="activity-description">
+                                                タスク「内装工事の壁紙選定」を完了しました。
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-header">
+                                                <span class="activity-user">鈴木 一郎</span>
+                                                <span class="activity-time">2025/02/19 11:20</span>
+                                            </div>
+                                            <div class="activity-description">
+                                                ワークフロー「躯体工事完了報告書」が承認されました。
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-header">
+                                                <span class="activity-user">山田 太郎</span>
+                                                <span class="activity-time">2025/02/18 09:45</span>
+                                            </div>
+                                            <div class="activity-description">
+                                                材料「内装用石膏ボード」の発注を登録しました。
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-comment-alt"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <div class="activity-header">
+                                                <span class="activity-user">木村 京香</span>
+                                                <span class="activity-time">2025/02/17 16:15</span>
+                                            </div>
+                                            <div class="activity-description">
+                                                コメント「本日の現場確認で屋根工事が完了したことを確認しました。」が追加されました。
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 材料調達タブ -->
+                    <div class="tab-content" id="materials-tab">
+                        <div class="section-header mb-4">
+                            <h5 class="section-title">材料調達一覧</h5>
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> 新規材料調達登録
+                            </a>
+                        </div>
+
+                        <div class="info-card mb-4">
+                            <div class="info-card-header">
+                                調達サマリー
+                            </div>

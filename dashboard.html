@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - ダッシュボード</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            font-size: 18px;
+            font-weight: 500;
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            padding: 0;
+            background-color: white;
+        }
+
+        .user-dashboard-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 25px 0 15px 0;
+            padding-left: 20px;
+            color: #4a4a4a;
+        }
+
+        .filter-options {
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+
+        .filter-options .form-check {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* テーブル */
+        .work-group {
+            margin: 0 20px 30px 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .work-header {
+            background-color: #f7f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .work-header h5 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 10px;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+            cursor: pointer;
+        }
+
+        /* ステータス */
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .status-completed {
+            background-color: #e5f5eb;
+            color: #2d8659;
+        }
+
+        .status-in-progress {
+            background-color: #e1f0f9;
+            color: #3987b9;
+        }
+
+        .status-waiting {
+            background-color: #fff8e1;
+            color: #b7832f;
+        }
+
+        .status-pending {
+            background-color: #feebef;
+            color: #d84a6b;
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="#" class="header-logo">工事進捗管理ツール</a>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="工事台帳を検索...">
+            </div>
+            <div class="header-right">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row g-0">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link active" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 main-content">
+                <h4 class="user-dashboard-title">山田 太郎さんのダッシュボード</h4>
+
+                <!-- ワークフロー一覧 -->
+                <h5 class="section-title">ワークフロー一覧</h5>
+
+                <div class="filter-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-period-wf" checked>
+                        <label class="form-check-label" for="filter-period-wf">期限切れ</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-today-wf" checked>
+                        <label class="form-check-label" for="filter-today-wf">今日まで</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-5days-wf" checked>
+                        <label class="form-check-label" for="filter-5days-wf">5日以内</label>
+                    </div>
+                </div>
+
+                <!-- 工事番号：XXX001 -->
+                <div class="work-group">
+                    <div class="work-header">
+                        <h5>工事番号：XXX001<br>工事名称：AAA会社超田工事</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>ワークフロー名称</th>
+                                    <th>ステータス</th>
+                                    <th>完了日付</th>
+                                    <th>担当者</th>
+                                    <th>作成者</th>
+                                    <th>作成日</th>
+                                    <th>確認担当</th>
+                                    <th>承認①</th>
+                                    <th>承認日①</th>
+                                    <th>承認②</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>1</td>
+                                    <td>見積書の承認</td>
+                                    <td><span class="status status-completed">完了</span></td>
+                                    <td>2025/2/4</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                    <td>田中 花子</td>
+                                    <td>田中 花子</td>
+                                    <td>2025/2/1 13:00</td>
+                                    <td>木村 京香</td>
+                                </tr>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>2</td>
+                                    <td>契約書承認</td>
+                                    <td><span class="status status-waiting">データ入力待ち</span></td>
+                                    <td>2025/2/26</td>
+                                    <td>木村 京香</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                    <td>高橋</td>
+                                    <td>データ入力待ち</td>
+                                    <td>-</td>
+                                    <td>データ入力待ち</td>
+                                </tr>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>3</td>
+                                    <td>報告書の承認</td>
+                                    <td><span class="status status-in-progress">進捗中</span></td>
+                                    <td>2025/3/13</td>
+                                    <td>山田 太郎</td>
+                                    <td>木村 京香</td>
+                                    <td>2025/1/15</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2025/2/1 13:00</td>
+                                    <td>木村 京香</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 工事番号：XXX002 -->
+                <div class="work-group">
+                    <div class="work-header">
+                        <h5>工事番号：XXX002<br>工事名称：CCC会社DDD工事</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>ワークフロー名称</th>
+                                    <th>ステータス</th>
+                                    <th>完了日付</th>
+                                    <th>担当者</th>
+                                    <th>作成者</th>
+                                    <th>作成日</th>
+                                    <th>確認担当</th>
+                                    <th>承認①</th>
+                                    <th>承認日①</th>
+                                    <th>承認②</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>1</td>
+                                    <td>見積書の承認</td>
+                                    <td><span class="status status-completed">完了</span></td>
+                                    <td>2025/2/4</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                    <td>田中 花子</td>
+                                    <td>田中 花子</td>
+                                    <td>2025/2/1 13:00</td>
+                                    <td>木村 京香</td>
+                                </tr>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>2</td>
+                                    <td>契約書承認</td>
+                                    <td><span class="status status-waiting">データ入力待ち</span></td>
+                                    <td>2025/2/26</td>
+                                    <td>木村 京香</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                    <td>高橋</td>
+                                    <td>データ入力待ち</td>
+                                    <td>-</td>
+                                    <td>データ入力待ち</td>
+                                </tr>
+                                <tr onclick="location.href='workflow_template_detail.html'" style="cursor: pointer;">
+                                    <td>3</td>
+                                    <td>報告書の承認</td>
+                                    <td><span class="status status-in-progress">進捗中</span></td>
+                                    <td>2025/3/13</td>
+                                    <td>山田 太郎</td>
+                                    <td>木村 京香</td>
+                                    <td>2025/1/15</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2025/2/1 13:00</td>
+                                    <td>木村 京香</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- タスク一覧 -->
+                <h5 class="section-title">タスク一覧</h5>
+
+                <div class="filter-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-period-task" checked>
+                        <label class="form-check-label" for="filter-period-task">期限切れ</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-today-task" checked>
+                        <label class="form-check-label" for="filter-today-task">今日まで</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter-5days-task" checked>
+                        <label class="form-check-label" for="filter-5days-task">5日以内</label>
+                    </div>
+                </div>
+
+                <!-- 工事番号：XXX001のタスク -->
+                <div class="work-group">
+                    <div class="work-header">
+                        <h5>工事番号：XXX001<br>工事名称：AAA会社超田工事</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>タスク名称</th>
+                                    <th>ステータス</th>
+                                    <th>完了日付</th>
+                                    <th>担当者</th>
+                                    <th>作成者</th>
+                                    <th>作成日</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>1</td>
+                                    <td>見積作成</td>
+                                    <td><span class="status status-completed">完了</span></td>
+                                    <td>2025/2/4</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                </tr>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>2</td>
+                                    <td>契約作成作成</td>
+                                    <td><span class="status status-waiting">未着手</span></td>
+                                    <td>2025/2/26</td>
+                                    <td>木村 京香</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                </tr>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>3</td>
+                                    <td>報告書作成</td>
+                                    <td><span class="status status-in-progress">進行中</span></td>
+                                    <td>2025/3/13</td>
+                                    <td>山田 太郎</td>
+                                    <td>木村 京香</td>
+                                    <td>2025/1/15</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 工事番号：XXX002のタスク -->
+                <div class="work-group mb-5">
+                    <div class="work-header">
+                        <h5>工事番号：XXX002<br>工事名称：CCC会社DDD工事</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>タスク名称</th>
+                                    <th>ステータス</th>
+                                    <th>完了日付</th>
+                                    <th>担当者</th>
+                                    <th>作成者</th>
+                                    <th>作成日</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>1</td>
+                                    <td>見積作成</td>
+                                    <td><span class="status status-completed">完了</span></td>
+                                    <td>2025/2/4</td>
+                                    <td>山田 太郎</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                </tr>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>2</td>
+                                    <td>契約作成作成</td>
+                                    <td><span class="status status-waiting">未着手</span></td>
+                                    <td>2025/2/26</td>
+                                    <td>木村 京香</td>
+                                    <td>田中 花子</td>
+                                    <td>2024/12/27</td>
+                                </tr>
+                                <tr onclick="location.href='construction_detail_task.html'" style="cursor: pointer;">
+                                    <td>3</td>
+                                    <td>報告書作成</td>
+                                    <td><span class="status status-in-progress">進行中</span></td>
+                                    <td>2025/3/13</td>
+                                    <td>山田 太郎</td>
+                                    <td>木村 京香</td>
+                                    <td>2025/1/15</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ページ読み込み時の処理
+        document.addEventListener('DOMContentLoaded', function() {
+            // モバイルメニューの動作
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.getElementById('sidebar').classList.toggle('show');
+                });
+            }
+            
+            // 設定メニューのクリックイベント（モバイル対応）
+            const settingsToggle = document.getElementById('nav-settings');
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', function(e) {
+                    // モバイル表示のときのみ処理
+                    if (window.innerWidth < 768) {
+                        e.preventDefault();
+                        document.getElementById('settings-submenu').classList.toggle('show');
+                    }
+                });
+            }
+            
+            // ダッシュボード固有の処理
+            // チェックボックスによるフィルタリング機能
+            $('.form-check-input').change(function () {
+                console.log('フィルタが変更されました');
+                // 実際のフィルタリング処理はここに実装
+            });
+
+            // ワークフロー一覧の行クリック時のイベント
+            $('.work-group:nth-child(-n+3) .data-table tbody tr').click(function () {
+                console.log('ワークフロー行がクリックされました');
+                window.location.href = 'workflow_template_detail.html';
+            });
+        });
+    </script>
+</body>
+
+</html>

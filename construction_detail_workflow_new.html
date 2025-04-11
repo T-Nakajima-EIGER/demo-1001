@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - ワークフロー新規作成</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .construction-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .form-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #4a4a4a;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 154, 122, 0.25);
+        }
+
+        .form-select {
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 8px 32px 8px 12px;
+            font-size: 14px;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 154, 122, 0.25);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-dark {
+            background-color: #000;
+            border-color: #000;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-dark:hover {
+            background-color: #333;
+            border-color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* テーブル */
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .custom-table th {
+            background-color: #f8f9fa;
+            color: #4a4a4a;
+            font-weight: 500;
+            padding: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .custom-table td {
+            padding: 10px;
+            border: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .add-button {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .add-button .btn {
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .document-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #e9ecef;
+            gap: 10px;
+        }
+
+        .document-row select {
+            flex: 0 1 60%;
+            min-width: 200px;
+        }
+
+        .document-row .btn-group {
+            display: flex;
+            gap: 5px;
+            flex: 0 0 auto;
+        }
+
+        .document-row .btn {
+            min-width: 80px;
+            padding: 6px 12px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .approval-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .approval-table th,
+        .approval-table td {
+            padding: 10px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar" id="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt me-2"></i>ダッシュボード</a></li>
+                    <li><a href="construction_list.html"><i class="fas fa-clipboard-list me-2"></i>工事台帳一覧</a></li>
+                    <li><a href="documents.html"><i class="fas fa-cog me-2"></i>資料一覧</a></li>
+                    <li><a href="#"><i class="fas fa-cog me-2"></i>設定</a></li>
+                </ul>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳詳細</h4>
+                <h5 class="construction-title">XXXXX会社のXXXXX工事（工事件名）</h5>
+
+                <div class="form-container">
+                    <form id="workflow-form">
+                        <h5 class="section-title">工事報告書の承認</h5>
+
+                        <!-- ワークフロー情報 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="workflow-type" class="form-label">ワークフロー種別</label>
+                                    <select class="form-select" id="workflow-type">
+                                        <option selected>工事報告書の承認</option>
+                                        <option>契約書の承認</option>
+                                        <option>見積書の承認</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="workflow-name" class="form-label">ワークフロー名称</label>
+                                    <input type="text" class="form-control" id="workflow-name" value="工事報告書の承認">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="workflow-details" class="form-label">ワークフロー詳細</label>
+                                    <textarea class="form-control" id="workflow-details">以下の書類との照合をお願いします。
+
+1. XXXXに関するAAAAの資料書
+2. XXXXに関するBBBBの保有書</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 必要な資料 -->
+                        <label class="form-label">承認依頼資料</label>
+
+                        <div class="document-row">
+                            <select class="form-select">
+                                <option selected>XXXXに関するAAAAの資料書</option>
+                            </select>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-dark">プレビュー</button>
+                                <button type="button" class="btn btn-dark">DL</button>
+                                <button type="button" class="btn btn-dark">削除</button>
+                            </div>
+                        </div>
+
+                        <div class="document-row">
+                            <select class="form-select">
+                                <option selected>XXXXに関するBBBBの資料書</option>
+                            </select>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-dark">プレビュー</button>
+                                <button type="button" class="btn btn-dark">DL</button>
+                                <button type="button" class="btn btn-dark">削除</button>
+                            </div>
+                        </div>
+
+                        <div class="add-button">
+                            <button type="button" class="btn btn-outline-secondary">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- 承認フロー -->
+                        <h5 class="section-title mt-5">承認フロー</h5>
+
+                        <table class="approval-table">
+                            <tr>
+                                <th style="width: 30%;">担当者</th>
+                                <th style="width: 20%;">社員コード</th>
+                                <th style="width: 20%;">期限 <span class="text-muted">(option)</span></th>
+                                <th style="width: 20%;">備考 <span class="text-muted">(option)</span></th>
+                                <th style="width: 10%;">承認</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" class="form-control" value="山田 太郎">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="3832-23832" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="2025/2/3">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-danger">削除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input type="text" class="form-control" value="木村 京香">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="3832-23832" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control" value="2025/2/3">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary">承認する</button>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="add-button">
+                            <button type="button" class="btn btn-outline-secondary">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- コメント -->
+                        <div class="row mt-5">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="comments" class="form-label">コメント</label>
+                                    <textarea class="form-control" id="comments" rows="5"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3 mb-5">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="creation-date" class="form-label">作成日時</label>
+                                    <input type="text" class="form-control" id="creation-date" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-5">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-dark px-5 py-2">保存する</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 現在日時を設定
+            var now = new Date();
+            var dateStr = now.getFullYear() + '/' +
+                ('0' + (now.getMonth() + 1)).slice(-2) + '/' +
+                ('0' + now.getDate()).slice(-2) + ' ' +
+                ('0' + now.getHours()).slice(-2) + ':' +
+                ('0' + now.getMinutes()).slice(-2);
+            $('#creation-date').val(dateStr);
+
+            // モバイル用サイドバートグル
+            $('#sidebar-toggle').click(function () {
+                $('#sidebar').toggleClass('show');
+            });
+
+            // フォーム送信処理
+            $('#workflow-form').submit(function (e) {
+                e.preventDefault();
+                alert('ワークフローが登録されました。');
+                // 実際はここでAPIへのデータ送信処理など
+            });
+        });
+    </script>
+</body>
+
+</html>

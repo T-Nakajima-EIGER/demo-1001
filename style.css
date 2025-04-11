@@ -1,0 +1,48 @@
+/* サイドバーサブメニュー */
+.sidebar-menu .nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar-menu .collapse .nav-link {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 13px;
+}
+
+.sidebar-menu .collapse .nav-item {
+    border-left: 1px solid #e0e0e0;
+}
+
+.sidebar-menu .collapse .nav-link.active {
+    background-color: rgba(44, 154, 122, 0.1);
+    border-left: 2px solid #2c9a7a;
+    color: #2c9a7a;
+}
+
+.sidebar-menu .collapse .nav-link:hover {
+    background-color: rgba(44, 154, 122, 0.05);
+    border-left: 2px solid #2c9a7a;
+}
+
+/* サブメニューのアイコン回転 */
+.sidebar-menu .nav-link[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+    transition: transform 0.3s;
+}
+
+.sidebar-menu .nav-link .fa-chevron-down {
+    transition: transform 0.3s;
+}
+
+/* モバイル用のサブメニュー調整 */
+@media (max-width: 768px) {
+    .sidebar-menu .collapse:not(.show) {
+        display: none;
+    }
+    
+    .sidebar-menu .collapse.show {
+        display: block;
+    }
+} 

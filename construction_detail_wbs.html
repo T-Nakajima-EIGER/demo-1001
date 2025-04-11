@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - WBS設定</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .construction-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+            position: relative;
+            min-height: calc(100vh - 157px);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        /* タブ */
+        .custom-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .custom-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .custom-tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .custom-tab:hover:not(.active) {
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        /* カード */
+        .wbs-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .wbs-card-header {
+            background-color: var(--table-header-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .wbs-card-body {
+            padding: 20px;
+        }
+
+        /* フォーム */
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #4a4a4a;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 154, 122, 0.25);
+        }
+
+        /* ボタン */
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        /* ステータス */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .status-success {
+            background-color: #d1e7dd;
+            color: #155724;
+        }
+
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* アップロードエリア */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+
+        .upload-area:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--primary-color);
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        /* ファイルリスト */
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+            color: #6c757d;
+            margin-right: 10px;
+        }
+
+        .file-info {
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* テーブル */
+        .wbs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .wbs-table th {
+            background-color: var(--table-header-bg);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .wbs-table td {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .wbs-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* ノート */
+        .note-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #4a4a4a;
+        }
+
+        .note-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+
+        .note-title i {
+            margin-right: 5px;
+            color: var(--primary-color);
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .btn-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-container .btn {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+
+        /* アクションボタン */
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="bi bi-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar" id="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="dashboard.html"><i class="fas fa-tachometer-alt me-2"></i>ダッシュボード</a></li>
+                    <li><a href="construction_list.html" class="active"><i class="fas fa-clipboard-list me-2"></i>工事台帳一覧</a></li>
+                    <li><a href="documents.html"><i class="fas fa-cog me-2"></i>資料一覧</a></li>
+                    <li><a href="#"><i class="fas fa-cog me-2"></i>設定</a></li>
+                </ul>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳詳細</h4>
+                <h5 class="construction-title">XXXXX会社のXXXXX工事（案件ID: PRJ-2025-0042）</h5>
+
+                <div class="content-container">
+                    <!-- タブメニュー -->
+                    <div class="custom-tabs">
+                        <div class="custom-tab" data-tab="overview" onclick="location.href='construction_detail.html'">概要
+                        </div>
+                        <div class="custom-tab" data-tab="tasks" onclick="location.href='construction_detail_tasks.html'">タスク
+                        </div>
+                        <div class="custom-tab" data-tab="workflows"
+                            onclick="location.href='construction_detail_workflows.html'">ワークフロー</div>
+                        <div class="custom-tab" data-tab="materials"
+                            onclick="location.href='construction_detail_materials.html'">材料調達</div>
+                        <div class="custom-tab" data-tab="documents" onclick="location.href='construction_detail_documents.html'">資料
+                        </div>
+                        <div class="custom-tab active" data-tab="wbs" onclick="location.href='construction_detail_wbs.html'">WBS</div>
+                    </div>
+
+                    <div class="section-header">
+                        <h5 class="section-title">WBS設定</h5>
+                    </div>
+
+                    <!-- WBS設定カード -->
+                    <div class="wbs-card">
+                        <div class="wbs-card-header">
+                            WBS基本設定
+                        </div>
+                        <div class="wbs-card-body">
+                            <div class="note-box">
+                                <div class="note-title"><i class="bi bi-info-circle"></i>WBS連携について</div>
+                                <p>
+                                    WBSはSAPで登録を確認する必要があります。正確なWBS番号を入力し、必要なCSVデータのダウンロードやアップロードを行ってください。
+                                    WBS番号を登録後は変更できません。登録がない場合、次の業務に進めません。
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="wbs-number" class="form-label">WBS番号（基幹システム管理ID）</label>
+                                <div class="d-flex">
+                                    <input type="text" class="form-control me-2" id="wbs-number"
+                                        placeholder="例：WBS-2025-0042">
+                                    <button class="btn btn-primary" style="min-width: 120px;">登録</button>
+                                </div>
+                                <div class="form-text">現在の登録状態：<span class="fw-bold text-success">WBS-2025-0042
+                                        登録済み</span></div>
+                            </div>
+
+                            <div class="btn-container">
+                                <button class="btn btn-outline-primary" id="download-csv">
+                                    <i class="bi bi-download me-1"></i> to SAP用CSVダウンロード
+                                </button>
+                                <button class="btn btn-outline-primary" id="upload-csv-btn">
+                                    <i class="bi bi-upload me-1"></i> from SAP用CSVアップロード
+                                </button>
+                            </div>
+
+                            <!-- アップロードエリア（初期状態では非表示） -->
+                            <div class="upload-area" id="upload-area" style="display: none;">
+                                <div class="upload-icon">
+                                    <i class="bi bi-cloud-upload"></i>
+                                </div>
+                                <div class="upload-text">
+                                    CSVファイルをここにドラッグ＆ドロップ<br>または
+                                </div>
+                                <button class="btn btn-outline-secondary" id="select-file-btn">ファイルを選択</button>
+                                <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                            </div>
+
+                            <!-- アップロード済みファイル -->
+                            <div class="file-list" id="file-list">
+                                <div class="file-item">
+                                    <div class="file-icon">
+                                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                                    </div>
+                                    <div class="file-info">
+                                        <div class="file-name">WBS_データ_20250220.csv</div>
+                                        <div class="file-meta">8.2 KB - 2025/02/20 アップロード</div>
+                                    </div>
+                                    <div class="file-actions">
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WBS進捗カード -->
+                    <div class="wbs-card">
+                        <div class="wbs-card-header">
+                            WBS進捗状況
+                        </div>
+                        <div class="wbs-card-body">
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle me-2"></i>最終更新: 2025/02/20 15:30 - WBSデータが正常に同期されています
+                            </div>
+
+                            <table class="wbs-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">No.</th>
+                                        <th style="width: 120px;">WBSコード</th>
+                                        <th>作業項目</th>
+                                        <th style="width: 120px;">ステータス</th>
+                                        <th style="width: 120px;">予定開始日</th>
+                                        <th style="width: 120px;">予定終了日</th>
+                                        <th style="width: 80px;">進捗</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>WBS-001</td>
+                                        <td>基礎工事</td>
+                                        <td><span class="status-badge status-success">完了</span></td>
+                                        <td>2025/01/10</td>
+                                        <td>2025/01/25</td>
+                                        <td>100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>WBS-002</td>
+                                        <td>躯体工事</td>
+                                        <td><span class="status-badge status-success">完了</span></td>
+                                        <td>2025/01/26</td>
+                                        <td>2025/02/15</td>
+                                        <td>100%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>WBS-003</td>
+                                        <td>内装工事</td>
+                                        <td><span class="status-badge status-warning">進行中</span></td>
+                                        <td>2025/02/16</td>
+                                        <td>2025/03/15</td>
+                                        <td>45%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>WBS-004</td>
+                                        <td>設備工事</td>
+                                        <td><span class="status-badge status-warning">進行中</span></td>
+                                        <td>2025/02/20</td>
+                                        <td>2025/03/25</td>
+                                        <td>30%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>WBS-005</td>
+                                        <td>外構工事</td>
+                                        <td><span class="status-badge status-danger">未着手</span></td>
+                                        <td>2025/03/26</td>
+                                        <td>2025/04/15</td>
+                                        <td>0%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // モバイル用サイドバートグル
+            $('#sidebar-toggle').click(function () {
+                $('#sidebar').toggleClass('show');
+            });
+
+            // アップロードボタンクリック
+            $('#upload-csv-btn').click(function () {
+                $('#upload-area').slideToggle();
+            });
+
+            // ファイル選択ボタンクリック
+            $('#select-file-btn').click(function () {
+                $('#csv-file-input').click();
+            });
+
+            // ファイル選択時の処理
+            $('#csv-file-input').change(function () {
+                const file = this.files[0];
+                if (file) {
+                    // ファイルアップロード処理（モック用のみ表示）
+                    alert(`ファイル "${file.name}" が選択されました。アップロード処理を開始します。`);
+
+                    // 実際はここでファイルをアップロード
+                    // アップロード完了後、新しいファイルをリストに追加
+
+                    $('#upload-area').slideUp();
+                }
+            });
+
+            // ドラッグ&ドロップ処理
+            const uploadArea = document.getElementById('upload-area');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                uploadArea.style.backgroundColor = 'rgba(44, 154, 122, 0.1)';
+                uploadArea.style.borderColor = 'var(--primary-color)';
+            }
+
+            function unhighlight() {
+                uploadArea.style.backgroundColor = '';
+                uploadArea.style.borderColor = '';
+            }
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                if (files.length > 0) {
+                    // ファイルアップロード処理（モック用のみ表示）
+                    alert(`ファイル "${files[0].name}" がドロップされました。アップロード処理を開始します。`);
+
+                    // 実際はここでファイルをアップロード
+                    // アップロード完了後、新しいファイルをリストに追加
+
+                    $('#upload-area').slideUp();
+                }
+            }
+
+            // CSVダウンロードボタンクリック
+            $('#download-csv').click(function () {
+                // 実際のアプリではここでCSVをダウンロード
+                alert('to SAP用CSVがダウンロードされます。');
+            });
+        });
+    </script>
+</body>
+
+</html>

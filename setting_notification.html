@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 通知設定</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            --sidebar-bg: #f7f9fa;
+            --table-header-bg: #ebeff3;
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        /* 通知設定カード */
+        .notification-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .notification-card-header {
+            background-color: var(--table-header-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .notification-card-header h5 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--table-header-text);
+        }
+
+        .notification-card-body {
+            padding: 20px;
+        }
+
+        /* スイッチ付きリスト */
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-item-text {
+            font-size: 14px;
+        }
+
+        .notification-item-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        /* Slack連携セクション */
+        .slack-connection {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .slack-logo {
+            font-size: 24px;
+            margin-right: 15px;
+            color: #4A154B;
+        }
+
+        .slack-status {
+            flex: 1;
+        }
+
+        .slack-status h6 {
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+
+        .status-text {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: #d1e7dd;
+            color: #155724;
+        }
+
+        .status-disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* フォームコントロール */
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-color: var(--border-color);
+            font-size: 14px;
+        }
+
+        /* テストボタンセクション */
+        .test-notification {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* 保存ボタンセクション */
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* トグルスイッチカスタマイズ */
+        .form-switch .form-check-input {
+            width: 40px;
+            height: 20px;
+            margin-top: 0;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row g-0">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse"
+                                data-bs-target="#settings-submenu" aria-expanded="true">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse show" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2"
+                                            id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2 active"
+                                            id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9">
+                <h4 class="page-header">通知設定</h4>
+
+                <div class="content-container">
+                    <!-- Slack連携セクション -->
+                    <div class="section-header">
+                        <h5 class="section-title">通知チャネル設定</h5>
+                    </div>
+
+                    <div class="slack-connection">
+                        <div class="slack-logo">
+                            <i class="fab fa-slack"></i>
+                        </div>
+                        <div class="slack-status">
+                            <h6>Slack連携</h6>
+                            <div class="status-text">
+                                <span class="status-badge status-connected">接続済み</span>
+                                <span>ワークスペース：NAKABO-TECH</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary btn-sm">再接続</button>
+                        <button class="btn btn-outline-danger btn-sm ms-2">接続解除</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="slackChannel" class="form-label">通知デフォルトチャネル</label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">#</span>
+                            <input type="text" class="form-control" id="slackChannel" placeholder="general"
+                                value="construction-updates">
+                        </div>
+                        <div class="form-text">すべての通知のデフォルト送信先チャネルです。特定の通知ごとに個別のチャネルを設定することもできます。</div>
+                    </div>
+
+                    <!-- 通知設定カード：タスク -->
+                    <div class="notification-card">
+                        <div class="notification-card-header">
+                            <h5>タスク通知設定</h5>
+                        </div>
+                        <div class="notification-card-body">
+                            <ul class="notification-list">
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">タスク期限通知</div>
+                                        <div class="notification-item-description">タスクの期限が近づいた時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="taskDeadlineSwitch" checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">タスク期限通知の時間設定</div>
+                                        <div class="notification-item-description">期限の何日前に通知するか設定します</div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <select class="form-select form-select-sm" style="width: 100px;">
+                                            <option>当日</option>
+                                            <option selected>1日前</option>
+                                            <option>2日前</option>
+                                            <option>3日前</option>
+                                            <option>1週間前</option>
+                                        </select>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">タスク割り当て通知</div>
+                                        <div class="notification-item-description">新しいタスクが割り当てられた時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="taskAssignSwitch" checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">タスク完了通知</div>
+                                        <div class="notification-item-description">タスクが完了した時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="taskCompleteSwitch" checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">タスク通知先チャネル（オプション）</div>
+                                        <div class="notification-item-description">空欄の場合はデフォルトチャネルに通知されます</div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="input-group" style="width: 200px;">
+                                            <span class="input-group-text">#</span>
+                                            <input type="text" class="form-control form-control-sm" placeholder="tasks"
+                                                value="tasks">
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 通知設定カード：ワークフロー -->
+                    <div class="notification-card">
+                        <div class="notification-card-header">
+                            <h5>ワークフロー通知設定</h5>
+                        </div>
+                        <div class="notification-card-body">
+                            <ul class="notification-list">
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">ワークフロー進行通知</div>
+                                        <div class="notification-item-description">ワークフローが次のステップに進んだ時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="workflowProgressSwitch"
+                                            checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">ワークフロー承認依頼通知</div>
+                                        <div class="notification-item-description">承認が必要な時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="workflowApprovalSwitch"
+                                            checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">ワークフロー完了通知</div>
+                                        <div class="notification-item-description">ワークフローが完了した時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="workflowCompleteSwitch"
+                                            checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">ワークフロー通知先チャネル（オプション）</div>
+                                        <div class="notification-item-description">空欄の場合はデフォルトチャネルに通知されます</div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="input-group" style="width: 200px;">
+                                            <span class="input-group-text">#</span>
+                                            <input type="text" class="form-control form-control-sm"
+                                                placeholder="workflows" value="workflows-approval">
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 通知設定カード：メンション -->
+                    <div class="notification-card">
+                        <div class="notification-card-header">
+                            <h5>メンション通知設定</h5>
+                        </div>
+                        <div class="notification-card-body">
+                            <ul class="notification-list">
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">コメントでのメンション</div>
+                                        <div class="notification-item-description">コメントで@メンションされた時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="commentMentionSwitch"
+                                            checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">資料へのコメント</div>
+                                        <div class="notification-item-description">あなたが作成した資料にコメントがついた時に通知します</div>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="documentCommentSwitch"
+                                            checked>
+                                    </div>
+                                </li>
+                                <li class="notification-item">
+                                    <div>
+                                        <div class="notification-item-text">メンション通知先チャネル（オプション）</div>
+                                        <div class="notification-item-description">空欄の場合はデフォルトチャネルに通知されます</div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="input-group" style="width: 200px;">
+                                            <span class="input-group-text">#</span>
+                                            <input type="text" class="form-control form-control-sm"
+                                                placeholder="mentions">
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- テスト通知 -->
+                    <div class="test-notification">
+                        <div class="mb-3">
+                            <label for="testChannel" class="form-label">テスト通知の送信先</label>
+                            <div class="input-group mb-2" style="max-width: 400px;">
+                                <span class="input-group-text">#</span>
+                                <input type="text" class="form-control" id="testChannel" placeholder="general"
+                                    value="test-notifications">
+                                <button class="btn btn-outline-secondary" type="button">テスト通知送信</button>
+                            </div>
+                            <div class="form-text">設定を保存する前に、通知が正しく機能するかテストできます。</div>
+                        </div>
+                    </div>
+
+                    <!-- 保存ボタン -->
+                    <div class="settings-actions">
+                        <button class="btn btn-outline-secondary me-2">キャンセル</button>
+                        <button class="btn btn-primary">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ページ読み込み時の処理
+        document.addEventListener('DOMContentLoaded', function () {
+            // モバイルメニューの動作
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function () {
+                    document.getElementById('sidebar').classList.toggle('show');
+                });
+            }
+
+            // 設定メニューのクリックイベント（モバイル対応）
+            const settingsToggle = document.getElementById('nav-settings');
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', function (e) {
+                    // モバイル表示のときのみ処理
+                    if (window.innerWidth < 768) {
+                        e.preventDefault();
+                        document.getElementById('settings-submenu').classList.toggle('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

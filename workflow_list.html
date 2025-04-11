@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - ワークフロー一覧</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a; /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350; /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa; /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3; /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+        
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .header-icon:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        
+        /* フィルターセクション */
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .filter-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #4a4a4a;
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-label {
+            margin-right: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .filter-select {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* ワークフローカード */
+        .workflow-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        
+        .workflow-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .workflow-card-header {
+            background-color: var(--table-header-bg);
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .workflow-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .workflow-id {
+            font-size: 13px;
+            color: #6c757d;
+            margin-left: 8px;
+        }
+        
+        .workflow-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .status-pending {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-in-progress {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background-color: #d1e7dd;
+            color: #155724;
+        }
+        
+        .status-rejected {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .workflow-card-body {
+            padding: 15px;
+        }
+        
+        .workflow-meta {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .workflow-meta-item {
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .workflow-meta-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+        
+        .workflow-meta-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .workflow-description {
+            font-size: 14px;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            border-left: 3px solid var(--border-color);
+            padding-left: 15px;
+        }
+        
+        /* 承認フロー */
+        .approval-flow {
+            margin-top: 15px;
+        }
+        
+        .approval-flow-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .approval-steps {
+            display: flex;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .approval-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 150px;
+            position: relative;
+            margin-right: 40px;
+        }
+        
+        .approval-step:last-child {
+            margin-right: 0;
+        }
+        
+        .approval-step:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 25px;
+            right: -30px;
+            width: 20px;
+            height: 1px;
+            background-color: var(--border-color);
+        }
+        
+        .step-status {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .step-approved {
+            background-color: var(--primary-color);
+        }
+        
+        .step-current {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .step-pending {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+        
+        .step-rejected {
+            background-color: #dc3545;
+        }
+        
+        .step-info {
+            text-align: center;
+        }
+        
+        .step-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .step-date {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        /* アクションボタン */
+        .workflow-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* ページネーション */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .pagination li {
+            margin: 0 2px;
+        }
+        
+        .pagination li a {
+            display: block;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .pagination li.active a {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination li a:hover:not(.active) {
+            background-color: var(--hover-bg);
+        }
+        
+        /* サマリーカード */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .summary-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .summary-card-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .summary-card {
+                min-width: 100%;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-item {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="2_1_dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="3_1_工事台帳一覧.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="5_資料.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="4_2_ワークフローテンプレート一覧.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">ワークフロー一覧</h4>
+                
+                <div class="content-container">
+                    <div class="section-header">
+                        <h5 class="section-title">ワークフローマスタ管理</h5>
+                        <a href="workflow_template_new.html" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> 新規ワークフロー作成
+                        </a>
+                    </div>
+                    
+                    <!-- サマリーカード -->
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">全てのワークフロー</div>
+                            <div class="summary-card-value">15</div>
+                            <div class="summary-card-description">登録済みワークフロー</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">見積書承認</div>
+                            <div class="summary-card-value">4</div>
+                            <div class="summary-card-description">27%</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">契約書承認</div>
+                            <div class="summary-card-value">5</div>
+                            <div class="summary-card-description">33%</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">工事報告書承認</div>
+                            <div class="summary-card-value">6</div>
+                            <div class="summary-card-description">40%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- フィルターセクション -->
+                    <div class="filter-section">
+                        <div class="filter-title">フィルター</div>
+                        <div class="filter-row">
+                            <div class="filter-item">
+                                <span class="filter-label">ワークフロー種別</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>見積書承認</option>
+                                    <option>契約書承認</option>
+                                    <option>工事報告書承認</option>
+                                    <option>納品書承認</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">作成者</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>山田 太郎</option>
+                                    <option>鈴木 一郎</option>
+                                    <option>佐藤 花子</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">担当者</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>山田 太郎</option>
+                                    <option>鈴木 一郎</option>
+                                    <option>佐藤 花子</option>
+                                    <option>田中 次郎</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">ステータス</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>有効</option>
+                                    <option>無効</option>
+                                    <option>一時停止</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row mt-2">
+                            <div class="filter-item">
+                                <span class="filter-label">工事件名</span>
+                                <input type="text" class="form-control form-control-sm" placeholder="工事件名を入力">
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">WBS番号</span>
+                                <input type="text" class="form-control form-control-sm" placeholder="WBS番号を入力">
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">期日</span>
+                                <div class="d-flex align-items-center">
+                                    <input type="date" class="form-control form-control-sm" style="width: 140px;">
+                                    <span class="mx-1">～</span>
+                                    <input type="date" class="form-control form-control-sm" style="width: 140px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row mt-3">
+                            <div class="filter-item ms-auto">
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" placeholder="キーワード検索" aria-label="検索">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="filter-item">
+                                <button class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-times-circle me-1"></i> クリア
+                                </button>
+                                <button class="btn btn-primary btn-sm ms-2">
+                                    <i class="fas fa-search me-1"></i> 検索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ワークフローリスト -->
+                    <div class="workflow-card">
+                        <div class="workflow-card-header">
+                            <div>
+                                <span class="workflow-title">見積書の承認</span>
+                                <span class="workflow-id">WF-001</span>
+                            </div>
+                            <div>
+                                <span class="workflow-status status-approved">有効</span>
+                            </div>
+                        </div>
+                        <div class="workflow-card-body">
+                            <div class="workflow-meta">
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成者</div>
+                                    <div class="workflow-meta-value">山田 太郎</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成日</div>
+                                    <div class="workflow-meta-value">2025/01/05</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">更新日</div>
+                                    <div class="workflow-meta-value">2025/01/15</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">種別</div>
+                                    <div class="workflow-meta-value">見積書承認</div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-description">
+                                工事に関する見積書の承認ワークフローです。承認者は部署長、経理担当、最終承認者の3段階です。
+                            </div>
+                            
+                            <div class="approval-flow">
+                                <div class="approval-flow-title">承認フロー</div>
+                                <div class="approval-steps">
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">部署長</div>
+                                            <div class="step-date">1段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">経理担当</div>
+                                            <div class="step-date">2段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">最終承認者</div>
+                                            <div class="step-date">3段階目</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-actions">
+                                <button class="btn btn-outline-secondary">
+                                    <i class="fas fa-eye me-1"></i> 詳細
+                                </button>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-1"></i> 編集
+                                </button>
+                                <button class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i> 削除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-card">
+                        <div class="workflow-card-header">
+                            <div>
+                                <span class="workflow-title">契約書の承認</span>
+                                <span class="workflow-id">WF-002</span>
+                            </div>
+                            <div>
+                                <span class="workflow-status status-approved">有効</span>
+                            </div>
+                        </div>
+                        <div class="workflow-card-body">
+                            <div class="workflow-meta">
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成者</div>
+                                    <div class="workflow-meta-value">佐藤 花子</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成日</div>
+                                    <div class="workflow-meta-value">2025/01/10</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">更新日</div>
+                                    <div class="workflow-meta-value">2025/01/20</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">種別</div>
+                                    <div class="workflow-meta-value">契約書承認</div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-description">
+                                工事に関する契約書の承認ワークフローです。承認者は部署長、法務担当、役員、最終承認者の4段階です。
+                            </div>
+                            
+                            <div class="approval-flow">
+                                <div class="approval-flow-title">承認フロー</div>
+                                <div class="approval-steps">
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">部署長</div>
+                                            <div class="step-date">1段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">法務担当</div>
+                                            <div class="step-date">2段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">役員</div>
+                                            <div class="step-date">3段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">最終承認者</div>
+                                            <div class="step-date">4段階目</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-actions">
+                                <button class="btn btn-outline-secondary">
+                                    <i class="fas fa-eye me-1"></i> 詳細
+                                </button>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-1"></i> 編集
+                                </button>
+                                <button class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i> 削除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-card">
+                        <div class="workflow-card-header">
+                            <div>
+                                <span class="workflow-title">工事報告書の承認</span>
+                                <span class="workflow-id">WF-003</span>
+                            </div>
+                            <div>
+                                <span class="workflow-status status-approved">有効</span>
+                            </div>
+                        </div>
+                        <div class="workflow-card-body">
+                            <div class="workflow-meta">
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成者</div>
+                                    <div class="workflow-meta-value">鈴木 一郎</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">作成日</div>
+                                    <div class="workflow-meta-value">2025/02/05</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">更新日</div>
+                                    <div class="workflow-meta-value">2025/02/10</div>
+                                </div>
+                                <div class="workflow-meta-item">
+                                    <div class="workflow-meta-label">種別</div>
+                                    <div class="workflow-meta-value">工事報告書承認</div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-description">
+                                工事完了時に提出する工事報告書の承認ワークフローです。承認者は現場責任者、品質管理担当、部署長の3段階です。
+                            </div>
+                            
+                            <div class="approval-flow">
+                                <div class="approval-flow-title">承認フロー</div>
+                                <div class="approval-steps">
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">現場責任者</div>
+                                            <div class="step-date">1段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">品質管理担当</div>
+                                            <div class="step-date">2段階目</div>
+                                        </div>
+                                    </div>
+                                    <div class="approval-step">
+                                        <div class="step-status step-approved">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="step-info">
+                                            <div class="step-name">部署長</div>
+                                            <div class="step-date">3段階目</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="workflow-actions">
+                                <button class="btn btn-outline-secondary">
+                                    <i class="fas fa-eye me-1"></i> 詳細
+                                </button>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-edit me-1"></i> 編集
+                                </button>
+                                <button class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i> 削除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ページネーション -->
+                    <div class="pagination-container">
+                        <ul class="pagination">
+                            <li><a href="#"><i class="fas fa-angle-double-left"></i></a></li>
+                            <li><a href="#"><i class="fas fa-angle-left"></i></a></li>
+                            <li class="active"><a href="#">1</a></li>
+                            <li><a href="#">2</a></li>
+                            <li><a href="#">3</a></li>
+                            <li><a href="#"><i class="fas fa-angle-right"></i></a></li>
+                            <li><a href="#"><i class="fas fa-angle-double-right"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // モバイルメニューの動作
+        $(document).ready(function() {
+            $('#sidebar-toggle').click(function() {
+                $('#sidebar').toggleClass('show');
+            });
+        });
+    </script>
+</body>
+</html>

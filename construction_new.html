@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 工事台帳新規作成</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .form-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #4a4a4a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-label i {
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        .form-control {
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 154, 122, 0.25);
+        }
+
+        .form-select {
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            padding: 8px 32px 8px 12px;
+            font-size: 14px;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px 12px;
+            transition: all 0.2s;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(44, 154, 122, 0.25);
+        }
+
+        /* テーブル */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background-color: var(--primary-color);
+            color: #fff;
+            font-weight: 500;
+            text-align: center;
+            padding: 12px;
+            white-space: nowrap;
+            border: 1px solid var(--primary-color);
+        }
+
+        .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-dark {
+            background-color: #000;
+            border-color: #000;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-dark:hover {
+            background-color: #333;
+            border-color: #333;
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .file-upload {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-upload .input-group {
+            width: 100%;
+        }
+
+        .file-upload .btn {
+            white-space: nowrap;
+        }
+
+        .file-name {
+            margin-right: 10px;
+            flex-grow: 1;
+            font-size: 14px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-dark {
+            border-radius: 4px;
+            padding: 6px 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-dark:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+              <!-- サイドバー -->
+              <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳新規作成</h4>
+
+                <div class="form-container">
+                    <form id="construction-form">
+                        <!-- 基本情報 -->
+                        <div class="row mb-4">
+                            <div class="col-md-9">
+                                <div class="form-group">
+                                    <label for="construction-name" class="form-label">
+                                        <i class="fas fa-building"></i>工事件名
+                                    </label>
+                                    <input type="text" class="form-control" id="construction-name"
+                                        value="XXXXX会社のXXXXX工事">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-tasks"></i>ステータス
+                                    </label>
+                                    <select class="form-select" id="status">
+                                        <option selected>契約書確認中</option>
+                                        <option>見積もり作成中</option>
+                                        <option>契約締結済み</option>
+                                        <option>工事中</option>
+                                        <option>完了</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="manager" class="form-label">
+                                        <i class="fas fa-user-tie"></i>営業担当者
+                                    </label>
+                                    <input type="text" class="form-control" id="manager">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="company-code" class="form-label">
+                                        <i class="fas fa-id-card"></i>社員コード
+                                    </label>
+                                    <input type="text" class="form-control" id="company-code" value="3832-23832"
+                                        disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 受注情報 -->
+                        <h5 class="section-title">
+                            <i class="fas fa-file-invoice-dollar"></i>受注情報
+                        </h5>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="client-name" class="form-label">
+                                        <i class="fas fa-building"></i>受注先名称
+                                    </label>
+                                    <select class="form-select" id="client-name">
+                                        <option selected>受注先を選択</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="client-code" class="form-label">
+                                        <i class="fas fa-search"></i>取引先コード
+                                    </label>
+                                    <select class="form-select" id="client-code">
+                                        <option selected>取引先コードを検索して選択</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 受注金額表 -->
+                        <div class="table-responsive mb-4">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th><i class="fas fa-hashtag"></i></th>
+                                        <th><i class="fas fa-list"></i> 項目</th>
+                                        <th><i class="fas fa-percent"></i> 税率</th>
+                                        <th><i class="fas fa-yen-sign"></i> 単価</th>
+                                        <th><i class="fas fa-cubes"></i> 個数</th>
+                                        <th><i class="fas fa-calculator"></i> 合計</th>
+                                        <th><i class="fas fa-file"></i> エビデンス</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1</td>
+                                        <td>コンクリート</td>
+                                        <td>10%</td>
+                                        <td>5,000</td>
+                                        <td>10</td>
+                                        <td>55,000</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2</td>
+                                        <td>鉄筋</td>
+                                        <td>10%</td>
+                                        <td>3,500</td>
+                                        <td>20</td>
+                                        <td>77,000</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>3</td>
+                                        <td>木材</td>
+                                        <td>10%</td>
+                                        <td>2,000</td>
+                                        <td>15</td>
+                                        <td>33,000</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>防水シート</td>
+                                        <td>10%</td>
+                                        <td>8,000</td>
+                                        <td>5</td>
+                                        <td>44,000</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>足場材</td>
+                                        <td>10%</td>
+                                        <td>7,000</td>
+                                        <td>8</td>
+                                        <td>61,600</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-dark">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold">合計</td>
+                                        <td class="fw-bold">270,600</td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="order-date" class="form-label">
+                                        <i class="fas fa-calendar-alt"></i>受注年月日
+                                    </label>
+                                    <input type="date" class="form-control" id="order-date">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="delivery-date" class="form-label">
+                                        <i class="fas fa-truck"></i>引き渡し日
+                                    </label>
+                                    <input type="date" class="form-control" id="delivery-date" value="2025-01-08">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="order-document" class="form-label">
+                                        <i class="fas fa-file-upload"></i>注文書
+                                    </label>
+                                    <div class="file-upload">
+                                        <input type="file" class="form-control" id="order-document" accept=".pdf,.doc,.docx" style="display: none;">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="file-name" placeholder="ファイルを選択してください" readonly>
+                                            <button type="button" class="btn btn-dark" id="browse-button">
+                                                <i class="fas fa-folder-open"></i> 参照
+                                            </button>
+                                            <button type="button" class="btn btn-primary" id="upload-button">
+                                                <i class="fas fa-upload"></i> アップロード
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="order-type" class="form-label">
+                                        <i class="fas fa-handshake"></i>受注形態
+                                    </label>
+                                    <select class="form-select" id="order-type">
+                                        <option selected>下請</option>
+                                        <option>元請</option>
+                                        <option>共同</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label for="disaster" class="form-label">
+                                        <i class="fas fa-exclamation-triangle"></i>労災
+                                    </label>
+                                    <select class="form-select" id="disaster">
+                                        <option selected>×</option>
+                                        <option>○</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="order-number" class="form-label">
+                                        <i class="fas fa-barcode"></i>受注形態
+                                    </label>
+                                    <input type="text" class="form-control" id="order-number" value="138284342">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="request-number" class="form-label">
+                                        <i class="fas fa-file-invoice"></i>請求伝票
+                                    </label>
+                                    <input type="text" class="form-control" id="request-number" value="92348332">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="completion-date" class="form-label">
+                                        <i class="fas fa-flag-checkered"></i>完成予定年月日
+                                    </label>
+                                    <input type="text" class="form-control" id="completion-date" value="2027/12/14">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-5">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-dark px-5 py-2">
+                                    <i class="fas fa-save"></i> 登録する
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // モバイル用サイドバートグル
+            $('#sidebar-toggle').click(function () {
+                $('#sidebar').toggleClass('show');
+            });
+
+            // ファイルアップロード関連の処理
+            $('#browse-button').click(function() {
+                $('#order-document').click();
+            });
+
+            $('#order-document').change(function() {
+                const fileName = $(this).val().split('\\').pop();
+                $('#file-name').val(fileName);
+            });
+
+            $('#upload-button').click(function() {
+                const fileInput = $('#order-document')[0];
+                if (fileInput.files.length === 0) {
+                    alert('ファイルを選択してください。');
+                    return;
+                }
+                // ここで実際のアップロード処理を実装
+                alert('ファイルをアップロードしました。');
+            });
+
+            // フォーム送信処理
+            $('#construction-form').submit(function (e) {
+                e.preventDefault();
+                alert('工事台帳が登録されました。');
+                // 実際はここでAPIへのデータ送信処理など
+            });
+        });
+    </script>
+</body>
+
+</html>

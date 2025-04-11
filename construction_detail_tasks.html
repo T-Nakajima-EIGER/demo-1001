@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - タスク一覧</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+            --status-pending: #f8d7da;
+            --status-in-progress: #fff3cd;
+            --status-completed: #d1e7dd;
+            --status-delayed: #e2e3e5;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .construction-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        /* タブ */
+        .custom-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .custom-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .custom-tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .custom-tab:hover:not(.active) {
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        /* フィルターセクション */
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #4a4a4a;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-label {
+            margin-right: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* テーブル */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+            cursor: pointer;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-pending {
+            background-color: var(--status-pending);
+            color: #721c24;
+        }
+
+        .status-in-progress {
+            background-color: var(--status-in-progress);
+            color: #856404;
+        }
+
+        .status-completed {
+            background-color: var(--status-completed);
+            color: #155724;
+        }
+
+        .status-delayed {
+            background-color: var(--status-delayed);
+            color: #383d41;
+        }
+
+        /* 優先度 */
+        .priority {
+            display: flex;
+            align-items: center;
+        }
+
+        .priority-high {
+            color: #dc3545;
+        }
+
+        .priority-medium {
+            color: #ffc107;
+        }
+
+        .priority-low {
+            color: #6c757d;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .table-icon-button {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-icon-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* ページネーション */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pagination li {
+            margin: 0 2px;
+        }
+
+        .pagination li a {
+            display: block;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .pagination li.active a {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination li a:hover:not(.active) {
+            background-color: var(--hover-bg);
+        }
+
+        /* サマリーカード */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .summary-card-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .summary-card-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* 進捗グラフ */
+        .progress-circle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .progress-circle-bg {
+            fill: none;
+            stroke: #f0f0f0;
+            stroke-width: 12;
+        }
+
+        .progress-circle-fill {
+            fill: none;
+            stroke: var(--primary-color);
+            stroke-width: 12;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: all 0.3s;
+        }
+
+        .progress-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-percentage {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .summary-card {
+                min-width: 100%;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-item {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse"
+                                data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2"
+                                            id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2"
+                                            id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳詳細</h4>
+                <h5 class="construction-title">XXXXX会社のXXXXX工事（案件ID: PRJ-2025-0042）</h5>
+
+                <div class="content-container">
+                    <!-- タブメニュー -->
+                    <div class="custom-tabs">
+                        <div class="custom-tab" data-tab="overview" onclick="location.href='construction_detail.html'">
+                            概要
+                        </div>
+                        <div class="custom-tab active" data-tab="tasks"
+                            onclick="location.href='construction_detail_tasks.html'">タスク
+                        </div>
+                        <div class="custom-tab" data-tab="workflows"
+                            onclick="location.href='construction_detail_workflows.html'">ワークフロー</div>
+                        <div class="custom-tab" data-tab="materials"
+                            onclick="location.href='construction_detail_materials.html'">材料調達</div>
+                        <div class="custom-tab" data-tab="documents"
+                            onclick="location.href='construction_detail_documents.html'">資料
+                        </div>
+                        <div class="custom-tab" data-tab="wbs" onclick="location.href='construction_detail_wbs.html'">
+                            WBS</div>
+                    </div>
+
+                    <div class="section-header">
+                        <h5 class="section-title">タスク一覧</h5>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> 新規タスク作成
+                        </a>
+                    </div>
+
+                    <!-- タスク集計カード -->
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">全体進捗</div>
+                            <div class="progress-circle-container">
+                                <div class="progress-circle">
+                                    <svg width="120" height="120" viewBox="0 0 120 120">
+                                        <circle class="progress-circle-bg" cx="60" cy="60" r="54"></circle>
+                                        <circle class="progress-circle-fill" cx="60" cy="60" r="54"
+                                            stroke-dasharray="340" stroke-dashoffset="102"></circle>
+                                    </svg>
+                                    <div class="progress-circle-text">
+                                        <div class="progress-percentage">70%</div>
+                                        <div class="progress-label">完了</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">タスク完了率</div>
+                            <div class="summary-card-value">21/30</div>
+                            <div class="summary-card-description">タスク完了</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">遅延タスク</div>
+                            <div class="summary-card-value">2</div>
+                            <div class="summary-card-description">対応が必要です</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">今週の期限</div>
+                            <div class="summary-card-value">5</div>
+                            <div class="summary-card-description">今週期限のタスク</div>
+                        </div>
+                    </div>
+
+                    <!-- フィルターセクション -->
+                    <div class="filter-section">
+                        <div class="filter-title">フィルター</div>
+                        <div class="filter-row">
+                            <div class="filter-item">
+                                <span class="filter-label">ステータス</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>未着手</option>
+                                    <option>進行中</option>
+                                    <option>完了</option>
+                                    <option>遅延</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">優先度</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>高</option>
+                                    <option>中</option>
+                                    <option>低</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">担当者</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>山田 太郎</option>
+                                    <option>佐藤 花子</option>
+                                    <option>鈴木 一郎</option>
+                                    <option>田中 二郎</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">期限</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>今日</option>
+                                    <option>今週</option>
+                                    <option>今月</option>
+                                    <option>遅延中</option>
+                                </select>
+                            </div>
+                            <div class="filter-item ms-auto">
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-search me-1"></i> 検索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- タスク一覧テーブル -->
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>タスク名</th>
+                                    <th style="width: 110px;">ステータス</th>
+                                    <th style="width: 80px;">優先度</th>
+                                    <th>担当者</th>
+                                    <th>作成者</th>
+                                    <th>開始日</th>
+                                    <th>期限日</th>
+                                    <th>完了日</th>
+                                    <th style="width: 100px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>T-001</td>
+                                    <td>基礎工事の施工計画書作成</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-up priority-high me-1"></i> 高
+                                        </div>
+                                    </td>
+                                    <td>山田 太郎</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>2025/01/05</td>
+                                    <td>2025/01/10</td>
+                                    <td>2025/01/09</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>T-002</td>
+                                    <td>鉄筋工事の品質管理チェック</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-up priority-high me-1"></i> 高
+                                        </div>
+                                    </td>
+                                    <td>田中 二郎</td>
+                                    <td>山田 太郎</td>
+                                    <td>2025/01/15</td>
+                                    <td>2025/01/25</td>
+                                    <td>2025/01/24</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>T-003</td>
+                                    <td>型枠設置確認</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-right priority-medium me-1"></i> 中
+                                        </div>
+                                    </td>
+                                    <td>山田 太郎</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>2025/01/26</td>
+                                    <td>2025/01/30</td>
+                                    <td>2025/01/29</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>T-004</td>
+                                    <td>コンクリート打設日程調整</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-up priority-high me-1"></i> 高
+                                        </div>
+                                    </td>
+                                    <td>佐藤 花子</td>
+                                    <td>田中 二郎</td>
+                                    <td>2025/01/28</td>
+                                    <td>2025/02/01</td>
+                                    <td>2025/01/31</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>T-005</td>
+                                    <td>躯体工事進捗確認</td>
+                                    <td><span class="status-badge status-in-progress">進行中</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-right priority-medium me-1"></i> 中
+                                        </div>
+                                    </td>
+                                    <td>鈴木 一郎</td>
+                                    <td>山田 太郎</td>
+                                    <td>2025/02/05</td>
+                                    <td>2025/02/20</td>
+                                    <td>-</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>T-006</td>
+                                    <td>内装材選定</td>
+                                    <td><span class="status-badge status-in-progress">進行中</span></td>
+                                    <td>
+                                        <div class="priority">
+                                            <i class="fas fa-arrow-down priority-low me-1"></i> 低
+                                        </div>
+                                    </td>
+                                    <td>佐藤 花子</td>
+                                    <td>田中 二郎</td>
+                                    <td>2025/02/10</td>
+                                    <td>2025/02/25</td>
+                                    <td>-</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細">
+                                                <i class="fas fa-eye"></i>
+                                            </button>

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 材料調達台帳詳細</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+            --status-pending: #f8d7da;
+            --status-ordered: #fff3cd;
+            --status-delivered: #d1e7dd;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .construction-title {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-dark {
+            background-color: #000;
+            border-color: #000;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-dark:hover {
+            background-color: #333;
+            border-color: #333;
+        }
+
+        /* 詳細表示エリア */
+        .material-detail-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .material-detail-header {
+            background-color: var(--table-header-bg);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .material-detail-body {
+            padding: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+            padding-right: 15px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-pending {
+            background-color: var(--status-pending);
+            color: #721c24;
+        }
+
+        .status-ordered {
+            background-color: var(--status-ordered);
+            color: #856404;
+        }
+
+        .status-delivered {
+            background-color: var(--status-delivered);
+            color: #155724;
+        }
+
+        /* 履歴テーブル */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 0;
+        }
+
+        .history-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .history-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ファイルアップロードエリア */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(44, 154, 122, 0.05);
+        }
+
+        .file-upload-icon {
+            font-size: 28px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .file-upload-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background-color: #f8f9fa;
+            position: relative;
+        }
+
+        .file-icon {
+            font-size: 18px;
+            margin-right: 10px;
+            color: #6c757d;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            font-size: 14px;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .file-action-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+
+        .file-action-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .file-action-btn.delete:hover {
+            color: #dc3545;
+        }
+
+        .file-action-btn.download:hover {
+            color: var(--primary-color);
+        }
+
+        .file-category {
+            display: inline-block;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background-color: #e9ecef;
+            margin-right: 8px;
+        }
+
+        /* タブ */
+        .custom-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .custom-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .custom-tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .custom-tab:hover:not(.active) {
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* コメントエリア */
+        .comment-list {
+            margin-bottom: 20px;
+        }
+
+        .comment-item {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comment-user {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .comment-date {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .comment-body {
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .comment-form {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+        }
+
+        .comment-form-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .detail-item {
+                width: 100%;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+
+            .detail-item {
+                width: 33.333%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar" id="sidebar">
+                <ul class="sidebar-menu">
+                    <li><a href="2_1_dashboard.html" class="active"><i class="fas fa-tachometer-alt me-2"></i>ダッシュボード</a></li>
+                    <li><a href="3_1_工事台帳一覧.html"><i class="fas fa-clipboard-list me-2"></i>工事台帳一覧</a></li>
+                    <li><a href="5_資料.html"><i class="fas fa-cog me-2"></i>資料一覧</a></li>
+                    <li><a href="#"><i class="fas fa-cog me-2"></i>設定</a></li>
+                </ul>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">工事台帳詳細</h4>
+                <h5 class="construction-title">XXXXX会社のXXXXX工事（案件ID: PRJ-2025-0042）</h5>
+
+                <div class="content-container">
+                    <!-- メインタブ -->
+                    <div class="custom-tabs mb-4">
+                        <div class="custom-tab" data-tab="overview">概要</div>
+                        <div class="custom-tab" data-tab="tasks">タスク</div>
+                        <div class="custom-tab" data-tab="workflows">ワークフロー</div>
+                        <div class="custom-tab active" data-tab="materials">材料調達</div>
+                        <div class="custom-tab" data-tab="documents">資料</div>
+                        <div class="custom-tab" data-tab="wbs">WBS</div>
+                    </div>
+
+                    <div class="section-header">
+                        <h5 class="section-title">材料調達台帳詳細：型枠用合板（ID: M-0004）</h5>
+                        <div>
+                            <a href="3_11_工事台帳_詳細_材料調達台帳一覧.html" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> 一覧へ戻る
+                            </a>
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-edit me-1"></i> 編集
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 詳細タブ -->
+                    <div class="custom-tabs mb-4">
+                        <div class="custom-tab active" data-tab="details">基本情報</div>
+                        <div class="custom-tab" data-tab="documents">関連書類</div>
+                        <div class="custom-tab" data-tab="history">履歴</div>
+                        <div class="custom-tab" data-tab="comments">コメント</div>
+                    </div>
+
+                    <!-- 基本情報タブ -->
+                    <div class="tab-content active" id="details-tab">
+                        <div class="material-detail-card">
+                            <div class="material-detail-header">
+                                基本情報
+                            </div>
+                            <div class="material-detail-body">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">材料ID</div>
+                                        <div class="detail-value">M-0004</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">材料名</div>
+                                        <div class="detail-value">型枠用合板</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">材料コード</div>
+                                        <div class="detail-value">WOD-001</div>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">カテゴリ</div>
+                                        <div class="detail-value">木材</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">規格・仕様</div>
+                                        <div class="detail-value">12mm厚 x 900mm x 1800mm</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">ステータス</div>
+                                        <div class="detail-value">
+                                            <span class="status-chip status-ordered">発注済</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="material-detail-card">
+                            <div class="material-detail-header">
+                                注文情報
+                            </div>
+                            <div class="material-detail-body">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">注文先業者</div>
+                                        <div class="detail-value">東京資材センター</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">注文日</div>
+                                        <div class="detail-value">2025/01/20</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">注文番号</div>
+                                        <div class="detail-value">ORD-25012001</div>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">納品予定日</div>
+                                        <div class="detail-value">2025/02/05</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">納品日</div>
+                                        <div class="detail-value">-</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">納品予定場所</div>
+                                        <div class="detail-value">現場直送</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="material-detail-card">
+                            <div class="material-detail-header">
+                                数量・金額情報
+                            </div>
+                            <div class="material-detail-body">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">単位</div>
+                                        <div class="detail-value">枚</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">注文数量</div>
+                                        <div class="detail-value">100</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">納品数量</div>
+                                        <div class="detail-value">-</div>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">単価（税抜）</div>
+                                        <div class="detail-value">¥2,500</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">税率</div>
+                                        <div class="detail-value">10%</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">合計金額（税込）</div>
+                                        <div class="detail-value">¥275,000</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="material-detail-card">
+                            <div class="material-detail-header">
+                                担当情報
+                            </div>
+                            <div class="material-detail-body">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <div class="detail-label">調達担当者</div>
+                                        <div class="detail-value">佐藤 花子</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">確認担当者</div>
+                                        <div class="detail-value">鈴木 一郎</div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <div class="detail-label">作成日時</div>
+                                        <div class="detail-value">2025/01/18 14:30</div>
+                                    </div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-item col-12">
+                                        <div class="detail-label">備考</div>
+                                        <div class="detail-value">コンクリート打設工事に使用する型枠用の合板。納品時に品質検査が必要。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 関連書類タブ -->
+                    <div class="tab-content" id="documents-tab">
+                        <div class="material-detail-card">
+                            <div class="material-detail-header d-flex justify-content-between align-items-center">
+                                <div>関連書類</div>
+                                <button class="btn btn-sm btn-outline-secondary" id="add-document-btn">
+                                    <i class="fas fa-plus me-1"></i> 書類追加
+                                </button>
+                            </div>
+                            <div class="material-detail-body">
+                                <!-- ファイルアップロードエリア -->
+                                <div class="file-upload-area" id="file-upload-area">
+                                    <div class="file-upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <div class="file-upload-text">
+                                        クリックしてファイルを選択するか、ここにファイルをドラッグ＆ドロップしてください
+                                    </div>
+                                    <input type="file" class="file-upload-input" id="file-upload-input" multiple>
+                                </div>
+
+                                <!-- ファイル一覧 -->
+                                <div class="file-list">
+                                    <div class="file-item">
+                                        <span class="file-category">見積書</span>
+                                        <i class="file-icon far fa-file-pdf"></i>
+                                        <span class="file-name">東京資材センター_型枠用合板_見積書.pdf</span>
+                                        <span class="file-size">245 KB</span>
+                                        <div class="file-actions">
+                                            <button class="file-action-btn download" title="ダウンロード">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="file-action-btn" title="プレビュー">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="file-action-btn delete" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="file-item">
+                                        <span class="file-category">注文書</span>
+                                        <i class="file-icon far fa-file-pdf"></i>
+                                        <span class="file-name">型枠用合板_注文書_20250120.pdf</span>
+                                        <span class="file-size">320 KB</span>
+                                        <div class="file-actions">
+                                            <button class="file-action-btn download" title="ダウンロード">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="file-action-btn" title="プレビュー">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="file-action-btn delete" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="file-item">
+                                        <span class="file-category">仕様書</span>
+                                        <i class="file-icon far fa-file-word"></i>
+                                        <span class="file-name">合板仕様書.docx</span>
+                                        <span class="file-size">154 KB</span>
+                                        <div class="file-actions">
+                                            <button class="file-action-btn download" title="ダウンロード">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="file-action-btn" title="プレビュー">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="file-action-btn delete" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="file-item">
+                                        <span class="file-category">カタログ</span>
+                                        <i class="file-icon far fa-file-image"></i>
+                                        <span class="file-name">型枠用合板カタログ.jpg</span>
+                                        <span class="file-size">1.2 MB</span>
+                                        <div class="file-actions">
+                                            <button class="file-action-btn download" title="ダウンロード">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                            <button class="file-action-btn" title="プレビュー">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="file-action-btn delete" title="削除">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // タブ切り替え機能
+        document.addEventListener('DOMContentLoaded', function() {
+            // メインタブの切り替え
+            const mainTabs = document.querySelectorAll('.custom-tabs:first-child .custom-tab');
+            mainTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    if (tabName !== 'materials') {
+                        // 材料調達以外のタブをクリックした場合、対応するページに遷移
+                        switch(tabName) {
+                            case 'overview':
+                                location.href = '3_3_工事台帳_詳細.html';
+                                break;
+                            // 他のタブの遷移先は必要に応じて追加
+                        }
+                    }
+                });
+            });
+
+            // 詳細タブの切り替え
+            const detailTabs = document.querySelectorAll('.custom-tabs:last-child .custom-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            detailTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // アクティブなタブのクラスを削除
+                    detailTabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // クリックされたタブをアクティブに
+                    this.classList.add('active');
+                    
+                    // 対応するコンテンツを表示
+                    const tabName = this.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

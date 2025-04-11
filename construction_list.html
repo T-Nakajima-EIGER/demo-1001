@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - 工事台帳一覧</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        /* フィルターセクション */
+        .filter-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #4a4a4a;
+        }
+
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-label {
+            margin-right: 8px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .filter-select {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .date-range {
+            display: flex;
+            align-items: center;
+        }
+
+        .date-range-separator {
+            margin: 0 8px;
+            color: #6c757d;
+        }
+
+        .filter-date {
+            width: 130px;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        /* テーブル */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .data-table th {
+            background-color: var(--table-header-bg);
+            color: var(--table-header-text);
+            font-weight: 500;
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: var(--hover-bg);
+            cursor: pointer;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .status-planning {
+            background-color: #e1f0f9;
+            color: #3987b9;
+        }
+
+        .status-progress {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-completed {
+            background-color: #d1e7dd;
+            color: #155724;
+        }
+
+        .status-delayed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+        }
+
+        .table-icon-button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-icon-button:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* ページネーション */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pagination li {
+            margin: 0 2px;
+        }
+
+        .pagination li a {
+            display: block;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .pagination li.active a {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .pagination li a:hover:not(.active) {
+            background-color: var(--hover-bg);
+        }
+
+        /* サマリーカード */
+        .summary-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .summary-card-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .summary-card-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .summary-card {
+                min-width: 100%;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-item {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .date-range {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .date-range-separator {
+                margin: 5px 0;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row g-0">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9">
+                <h4 class="page-header">工事台帳一覧</h4>
+
+                <div class="content-container">
+                    <div class="section-header">
+                        <h5 class="section-title">工事案件一覧</h5>
+                        <a href="construction_new.html" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> 新規工事台帳作成
+                        </a>
+                    </div>
+
+                    <!-- サマリーカード -->
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <div class="summary-card-title">全案件数</div>
+                            <div class="summary-card-value">42</div>
+                            <div class="summary-card-description">登録済み案件</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">計画中</div>
+                            <div class="summary-card-value">8</div>
+                            <div class="summary-card-description">19%</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">工事中</div>
+                            <div class="summary-card-value">18</div>
+                            <div class="summary-card-description">43%</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-card-title">完了</div>
+                            <div class="summary-card-value">16</div>
+                            <div class="summary-card-description">38%</div>
+                        </div>
+                    </div>
+
+                    <!-- フィルターセクション -->
+                    <div class="filter-section">
+                        <div class="filter-title">フィルター</div>
+                        <div class="filter-row">
+                            <div class="filter-item">
+                                <span class="filter-label">ステータス</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>計画中</option>
+                                    <option>工事中</option>
+                                    <option>完了</option>
+                                    <option>遅延中</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">工事種別</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>新築</option>
+                                    <option>改修</option>
+                                    <option>解体</option>
+                                    <option>設備工事</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">担当者</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>山田 太郎</option>
+                                    <option>鈴木 一郎</option>
+                                    <option>佐藤 花子</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">取引先</span>
+                                <select class="filter-select">
+                                    <option value="">すべて</option>
+                                    <option>株式会社XXXXX</option>
+                                    <option>YYYYY株式会社</option>
+                                    <option>ZZZZZ市役所</option>
+                                    <option>医療法人AAAAA</option>
+                                    <option>BBBBB不動産</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="filter-row">
+                            <div class="filter-item">
+                                <span class="filter-label">受注日</span>
+                                <div class="date-range">
+                                    <input type="date" class="filter-date" placeholder="開始日">
+                                    <span class="date-range-separator">～</span>
+                                    <input type="date" class="filter-date" placeholder="終了日">
+                                </div>
+                            </div>
+                            <div class="filter-item">
+                                <span class="filter-label">納品日</span>
+                                <div class="date-range">
+                                    <input type="date" class="filter-date" placeholder="開始日">
+                                    <span class="date-range-separator">～</span>
+                                    <input type="date" class="filter-date" placeholder="終了日">
+                                </div>
+                            </div>
+                            <div class="filter-item ms-auto">
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" placeholder="検索"
+                                        aria-label="検索">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-buttons">
+                            <button class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-times-circle me-1"></i> クリア
+                            </button>
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fas fa-search me-1"></i> 検索
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 工事台帳一覧テーブル -->
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 110px;">案件ID</th>
+                                    <th>工事件名</th>
+                                    <th>受注先</th>
+                                    <th>営業担当者</th>
+                                    <th>受注日</th>
+                                    <th>完成予定日</th>
+                                    <th>ステータス</th>
+                                    <th style="width: 120px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0042</td>
+                                    <td>XXXXX会社のXXXXX工事</td>
+                                    <td>株式会社XXXXX</td>
+                                    <td>山田 太郎</td>
+                                    <td>2025/01/10</td>
+                                    <td>2025/05/15</td>
+                                    <td><span class="status-badge status-progress">工事中</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0041</td>
+                                    <td>YYYYY会社本社ビル改修工事</td>
+                                    <td>YYYYY株式会社</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>2025/01/05</td>
+                                    <td>2025/04/20</td>
+                                    <td><span class="status-badge status-progress">工事中</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0040</td>
+                                    <td>ZZZZZ小学校体育館建設工事</td>
+                                    <td>ZZZZZ市役所</td>
+                                    <td>佐藤 花子</td>
+                                    <td>2024/12/15</td>
+                                    <td>2025/06/30</td>
+                                    <td><span class="status-badge status-progress">工事中</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0039</td>
+                                    <td>AAAAA病院外構工事</td>
+                                    <td>医療法人AAAAA</td>
+                                    <td>山田 太郎</td>
+                                    <td>2024/12/10</td>
+                                    <td>2025/03/15</td>
+                                    <td><span class="status-badge status-delayed">遅延中</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0038</td>
+                                    <td>BBBBB商業施設新築工事</td>
+                                    <td>BBBBB不動産</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>2024/11/25</td>
+                                    <td>2025/09/30</td>
+                                    <td><span class="status-badge status-progress">工事中</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0037</td>
+                                    <td>CCCCC物流センター設備更新工事</td>
+                                    <td>株式会社CCCCC</td>
+                                    <td>佐藤 花子</td>
+                                    <td>2024/11/15</td>
+                                    <td>2025/02/28</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0036</td>
+                                    <td>DDDDD駅前ビル解体工事</td>
+                                    <td>DDDDD株式会社</td>
+                                    <td>山田 太郎</td>
+                                    <td>2024/11/01</td>
+                                    <td>2025/01/31</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr onclick="window.location='construction_detail.html'">
+                                    <td>PRJ-2025-0035</td>
+                                    <td>EEEEE工場設備改修工事</td>
+                                    <td>EEEEE工業</td>
+                                    <td>鈴木 一郎</td>
+                                    <td>2024/10/20</td>
+                                    <td>2025/01/15</td>
+                                    <td><span class="status-badge status-completed">完了</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="table-icon-button" title="詳細" onclick="window.location='construction_detail.html'; event.stopPropagation();">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="編集" onclick="event.stopPropagation();">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button class="table-icon-button" title="削除" onclick="event.stopPropagation();">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // モバイルメニューの動作
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.getElementById('sidebar').classList.toggle('show');
+                });
+            }
+            
+            // 設定メニューのクリックイベント（モバイル対応）
+            const settingsToggle = document.getElementById('nav-settings');
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', function(e) {
+                    // モバイル表示のときのみ処理
+                    if (window.innerWidth < 768) {
+                        e.preventDefault();
+                        document.getElementById('settings-submenu').classList.toggle('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - ワークフローテンプレート詳細</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 全体スタイル */
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダースタイル */
+        .main-header {
+            background-color: #3b4350;
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバースタイル */
+        .sidebar {
+            background-color: #f7f9fa;
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid #e0e0e0;
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: #edf4f0;
+            border-left: 3px solid #2c9a7a;
+        }
+
+        .sidebar-menu li a.active {
+            background-color: #edf4f0;
+            border-left: 3px solid #2c9a7a;
+            color: #2c9a7a;
+            font-weight: 500;
+        }
+
+        /* メインコンテンツスタイル */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: #2c9a7a;
+            border-color: #2c9a7a;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: #248a6c;
+            border-color: #248a6c;
+        }
+
+        /* 詳細セクション */
+        .detail-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .detail-section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .detail-description {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .template-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .template-meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .template-meta-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .template-meta-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* タグ */
+        .tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-draft {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        /* 承認フロー */
+        .approval-flow {
+            margin-bottom: 20px;
+        }
+
+        .approval-flow-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #4a4a4a;
+        }
+
+        .approval-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .approval-step {
+            display: flex;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .approval-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 16px;
+            bottom: -16px;
+            height: 15px;
+            border-left: 1px dashed #ced4da;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            margin-right: 15px;
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .step-type {
+            font-size: 12px;
+            color: #6c757d;
+            background-color: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .step-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .step-detail-item {
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .step-detail-label {
+            color: #6c757d;
+            margin-right: 5px;
+        }
+
+        /* 履歴 */
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .history-item {
+            display: flex;
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #6c757d;
+        }
+
+        .history-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 17px;
+            height: calc(100% - 5px);
+            border-left: 1px dashed #ced4da;
+        }
+
+        .history-date {
+            width: 150px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .history-content {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .history-user {
+            font-weight: 500;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .template-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .approval-step {
+                flex-direction: column;
+            }
+
+            .step-number {
+                margin-bottom: 10px;
+            }
+
+            .step-details {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .history-item {
+                flex-direction: column;
+            }
+
+            .history-date {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="2_1_dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="3_1_工事台帳一覧.html" class="nav-link" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="5_資料.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" id="nav-settings" data-bs-toggle="collapse"
+                                data-bs-target="#settings-submenu" aria-expanded="true">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse show" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="4_2_ワークフローテンプレート一覧.html" class="nav-link py-2 active"
+                                            id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2"
+                                            id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">ワークフローテンプレート詳細</h4>
+
+                <div class="content-container">
+                    <div class="section-header">
+                        <h5 class="section-title">見積書承認テンプレート <span class="status-badge status-active">有効</span></h5>
+                        <div>
+                            <a href="4_2_ワークフローテンプレート一覧.html" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-arrow-left me-1"></i> 一覧に戻る
+                            </a>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    アクション
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i>編集</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>複製</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item text-danger" href="#"><i
+                                                class="fas fa-trash me-2"></i>削除</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 基本情報 -->
+                    <div class="detail-section">
+                        <h6 class="detail-section-title">テンプレート基本情報</h6>
+
+                        <div class="template-meta">
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">テンプレートID</div>
+                                <div class="template-meta-value">TMP-001</div>
+                            </div>
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">作成者</div>
+                                <div class="template-meta-value">山田 太郎</div>
+                            </div>
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">作成日</div>
+                                <div class="template-meta-value">2025/01/05</div>
+                            </div>
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">更新日</div>
+                                <div class="template-meta-value">2025/01/15</div>
+                            </div>
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">種別</div>
+                                <div class="template-meta-value">見積書承認</div>
+                            </div>
+                            <div class="template-meta-item">
+                                <div class="template-meta-label">使用回数</div>
+                                <div class="template-meta-value">24回</div>
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">説明</div>
+                            <div class="detail-description">
+                                工事に関する見積書の承認ワークフローテンプレートです。承認者は部署長、経理担当、最終承認者の3段階です。
+                                このテンプレートは、工事見積書の内容確認と承認プロセスを標準化するために作成されました。
+                                各段階で期限を設定しており、期限を過ぎた場合は自動でリマインダーが送信されます。
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">タグ</div>
+                            <div>
+                                <span class="tag">工事関連</span>
+                                <span class="tag">承認フロー</span>
+                                <span class="tag">見積書</span>
+                                <span class="tag">重要</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 承認フロー -->
+                    <div class="detail-section">
+                        <h6 class="detail-section-title">承認フロー</h6>
+
+                        <div class="approval-steps">
+                            <!-- ステップ1 -->
+                            <div class="approval-step">
+                                <div class="step-number">1</div>
+                                <div class="step-info">
+                                    <div class="step-header">
+                                        <div class="step-title">部署長</div>
+                                        <div class="step-type">役職承認</div>
+                                    </div>
+                                    <div class="step-details">
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認レベル:</span>
+                                            <span>1次承認</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認期限:</span>
+                                            <span>3日以内</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">リマインダー:</span>
+                                            <span>期限1日前</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ステップ2 -->
+                            <div class="approval-step">
+                                <div class="step-number">2</div>
+                                <div class="step-info">
+                                    <div class="step-header">
+                                        <div class="step-title">経理担当</div>
+                                        <div class="step-type">部門承認</div>
+                                    </div>
+                                    <div class="step-details">
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認レベル:</span>
+                                            <span>2次承認</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認期限:</span>
+                                            <span>5日以内</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">リマインダー:</span>
+                                            <span>期限2日前</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ステップ3 -->
+                            <div class="approval-step">
+                                <div class="step-number">3</div>
+                                <div class="step-info">
+                                    <div class="step-header">
+                                        <div class="step-title">最終承認者</div>
+                                        <div class="step-type">役職承認</div>
+                                    </div>
+                                    <div class="step-details">
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認レベル:</span>
+                                            <span>最終承認</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">承認期限:</span>
+                                            <span>7日以内</span>
+                                        </div>
+                                        <div class="step-detail-item">
+                                            <span class="step-detail-label">リマインダー:</span>
+                                            <span>期限3日前</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 通知設定 -->
+                    <div class="detail-section">
+                        <h6 class="detail-section-title">通知設定</h6>
+
+                        <div class="detail-item">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="detail-label">メール通知</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-check-circle text-success me-2"></i> 有効
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="detail-label">リマインダー通知</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-check-circle text-success me-2"></i> 有効
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="detail-label">完了通知</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-check-circle text-success me-2"></i> 有効
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 変更履歴 -->
+                    <div class="detail-section">
+                        <h6 class="detail-section-title">変更履歴</h6>
+
+                        <ul class="history-list">
+                            <li class="history-item">
+                                <div class="history-date">2025/01/15 14:30</div>
+                                <div class="history-content">
+                                    <span class="history-user">山田 太郎</span> が説明文を更新しました
+                                </div>
+                            </li>
+                            <li class="history-item">
+                                <div class="history-date">2025/01/10 09:15</div>
+                                <div class="history-content">
+                                    <span class="history-user">山田 太郎</span> が承認ステップを修正しました
+                                </div>
+                            </li>
+                            <li class="history-item">
+                                <div class="history-date">2025/01/05 16:45</div>
+                                <div class="history-content">
+                                    <span class="history-user">山田 太郎</span> がテンプレートを作成しました
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- アクションボタン -->
+                    <div class="action-buttons">
+                        <a href="4_2_ワークフローテンプレート一覧.html" class="btn btn-outline-secondary">
+                            一覧に戻る
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> 編集
+                        </a>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-play-circle me-1"></i> このテンプレートを使用
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

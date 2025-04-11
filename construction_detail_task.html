@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - タスク詳細</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c9a7a;
+            /* Backlogプライマリーカラー */
+            --primary-hover: #248a6c;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --header-bg: #3b4350;
+            /* Backlogヘッダー色 */
+            --sidebar-bg: #f7f9fa;
+            /* Backlogサイドバー色 */
+            --table-header-bg: #ebeff3;
+            /* Backlogテーブルヘッダー色 */
+            --table-header-text: #4a4a4a;
+            --hover-bg: #edf4f0;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダー */
+        .main-header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo {
+            font-size: 18px;
+            font-weight: 500;
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバー */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid var(--border-color);
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .sidebar-menu li a.active {
+            background-color: var(--hover-bg);
+            border-left: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* メインコンテンツ */
+        .page-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .breadcrumb-container {
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--text-color);
+        }
+
+        /* ステータス */
+        .status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .status-completed {
+            background-color: #e5f5eb;
+            color: #2d8659;
+        }
+
+        .status-in-progress {
+            background-color: #e1f0f9;
+            color: #3987b9;
+        }
+
+        .status-waiting {
+            background-color: #fff8e1;
+            color: #b7832f;
+        }
+
+        .status-pending {
+            background-color: #feebef;
+            color: #d84a6b;
+        }
+
+        /* タスク詳細カード */
+        .info-card {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .info-card-header {
+            background-color: var(--table-header-bg);
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-card-header h5 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .info-card-body {
+            padding: 15px;
+        }
+
+        .task-title {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .task-property {
+            margin-bottom: 15px;
+        }
+
+        .task-property-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .task-property-value {
+            font-size: 16px;
+        }
+
+        .task-actions {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .comment-section {
+            margin-top: 30px;
+        }
+
+        .comment-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .comment-user {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .comment-date {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .comment-content {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .attachments-section {
+            margin-top: 30px;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .attachment-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            color: #6c757d;
+        }
+
+        .attachment-info {
+            flex: 1;
+        }
+
+        .attachment-name {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .attachment-meta {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .attachment-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="header-left">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="#" class="header-logo">工事進捗管理ツール</a>
+            </div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="工事台帳を検索...">
+            </div>
+            <div class="header-right">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row g-0">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link active" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" id="nav-settings" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2" id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2" id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- メインコンテンツ -->
+            <div class="col-md-9">
+                <h4 class="page-header">タスク詳細</h4>
+                
+                <div class="content-container">
+                    <!-- パンくずリスト -->
+                    <nav aria-label="breadcrumb" class="breadcrumb-container">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="dashboard.html">ダッシュボード</a></li>
+                            <li class="breadcrumb-item"><a href="construction_list.html">工事台帳一覧</a></li>
+                            <li class="breadcrumb-item"><a href="construction_detail.html">工事詳細（XXX001）</a></li>
+                            <li class="breadcrumb-item active">タスク詳細</li>
+                        </ol>
+                    </nav>
+
+                    <!-- タスク基本情報カード -->
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <h5>タスク情報</h5>
+                        </div>
+                        <div class="info-card-body">
+                            <h1 class="task-title">見積作成</h1>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="task-property">
+                                        <div class="task-property-label">工事番号</div>
+                                        <div class="task-property-value">XXX001</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">工事名称</div>
+                                        <div class="task-property-value">AAA会社超田工事</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">タスク番号</div>
+                                        <div class="task-property-value">TASK-001</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">ステータス</div>
+                                        <div class="task-property-value">
+                                            <span class="status status-completed">完了</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="task-property">
+                                        <div class="task-property-label">担当者</div>
+                                        <div class="task-property-value">山田 太郎</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">作成者</div>
+                                        <div class="task-property-value">田中 花子</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">作成日</div>
+                                        <div class="task-property-value">2024/12/27</div>
+                                    </div>
+                                    <div class="task-property">
+                                        <div class="task-property-label">完了日</div>
+                                        <div class="task-property-value">2025/2/4</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="task-property">
+                                <div class="task-property-label">詳細説明</div>
+                                <div class="task-property-value">
+                                    <p>AAA会社超田工事の見積書を作成してください。</p>
+                                    <p>必要な書類は全て資料フォルダに保存されています。</p>
+                                    <p>見積金額は過去の実績と現在の市場価格を考慮して算出してください。</p>
+                                </div>
+                            </div>
+                            
+                            <div class="task-actions">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i>編集
+                                </button>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-check me-1"></i>完了としてマーク
+                                </button>
+                                <button class="btn btn-outline-secondary">
+                                    <i class="fas fa-user-plus me-1"></i>担当者変更
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 添付ファイル -->
+                    <div class="info-card attachments-section">
+                        <div class="info-card-header">
+                            <h5>添付ファイル</h5>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="attachment-item">
+                                <div class="attachment-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="attachment-info">
+                                    <div class="attachment-name">見積書テンプレート.pdf</div>
+                                    <div class="attachment-meta">2024/12/27 アップロード - 1.2MB</div>
+                                </div>
+                                <div class="attachment-actions">
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="attachment-item">
+                                <div class="attachment-icon">
+                                    <i class="fas fa-file-excel"></i>
+                                </div>
+                                <div class="attachment-info">
+                                    <div class="attachment-name">材料単価表.xlsx</div>
+                                    <div class="attachment-meta">2024/12/27 アップロード - 0.8MB</div>
+                                </div>
+                                <div class="attachment-actions">
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="attachment-item">
+                                <div class="attachment-icon">
+                                    <i class="fas fa-file-word"></i>
+                                </div>
+                                <div class="attachment-info">
+                                    <div class="attachment-name">工事仕様書.docx</div>
+                                    <div class="attachment-meta">2024/12/28 アップロード - 1.5MB</div>
+                                </div>
+                                <div class="attachment-actions">
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-paperclip me-1"></i>ファイルを添付
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- コメント -->
+                    <div class="info-card comment-section">
+                        <div class="info-card-header">
+                            <h5>コメント</h5>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <div class="comment-user">田中 花子</div>
+                                    <div class="comment-date">2024/12/27 14:30</div>
+                                </div>
+                                <div class="comment-content">
+                                    見積作成をお願いします。資料はすべて添付しています。
+                                </div>
+                            </div>
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <div class="comment-user">山田 太郎</div>
+                                    <div class="comment-date">2024/12/28 09:15</div>
+                                </div>
+                                <div class="comment-content">
+                                    承知しました。来週の月曜日までに作成します。
+                                </div>
+                            </div>
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <div class="comment-user">田中 花子</div>
+                                    <div class="comment-date">2025/01/05 16:45</div>
+                                </div>
+                                <div class="comment-content">
+                                    進捗はいかがでしょうか？
+                                </div>
+                            </div>
+                            <div class="comment-item">
+                                <div class="comment-header">
+                                    <div class="comment-user">山田 太郎</div>
+                                    <div class="comment-date">2025/01/06 10:30</div>
+                                </div>
+                                <div class="comment-content">
+                                    見積書の作成が完了しました。ご確認お願いします。
+                                </div>
+                            </div>
+                            
+                            <!-- コメント入力フォーム -->
+                            <div class="mt-4">
+                                <textarea class="form-control" rows="3" placeholder="コメントを入力..."></textarea>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <button class="btn btn-primary">
+                                        <i class="fas fa-paper-plane me-1"></i>送信
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery と Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // モバイルメニューの動作
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.getElementById('sidebar').classList.toggle('show');
+                });
+            }
+            
+            // 設定メニューのクリックイベント（モバイル対応）
+            const settingsToggle = document.getElementById('nav-settings');
+            if (settingsToggle) {
+                settingsToggle.addEventListener('click', function(e) {
+                    // モバイル表示のときのみ処理
+                    if (window.innerWidth < 768) {
+                        e.preventDefault();
+                        document.getElementById('settings-submenu').classList.toggle('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html> 

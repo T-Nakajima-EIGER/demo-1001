@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - ワークフローテンプレート作成</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 全体スタイル */
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #fff;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ヘッダースタイル */
+        .main-header {
+            background-color: #3b4350;
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .header-icon:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* サイドバースタイル */
+        .sidebar {
+            background-color: #f7f9fa;
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid #e0e0e0;
+            padding: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: #edf4f0;
+            border-left: 3px solid #2c9a7a;
+        }
+
+        .sidebar-menu li a.active {
+            background-color: #edf4f0;
+            border-left: 3px solid #2c9a7a;
+            color: #2c9a7a;
+            font-weight: 500;
+        }
+
+        /* メインコンテンツスタイル */
+        .page-header {
+            background-color: #4a4a4a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .content-container {
+            padding: 20px;
+            background-color: #fff;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background-color: #2c9a7a;
+            border-color: #2c9a7a;
+            color: white;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: #248a6c;
+            border-color: #248a6c;
+        }
+
+        /* フォームスタイル */
+        .form-section {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #4a4a4a;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .form-label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #4a4a4a;
+        }
+
+        .form-text {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* 承認ステップ */
+        .approval-steps-container {
+            margin-top: 20px;
+        }
+
+        .approval-step-item {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .approval-step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .approval-step-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: #4a4a4a;
+        }
+
+        .approval-step-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .approval-step-body {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .drag-handle {
+            cursor: move;
+            color: #6c757d;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .drag-handle:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* アクションボタン */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 56px;
+                width: 250px;
+                z-index: 999;
+                transition: all 0.3s;
+                height: calc(100% - 56px);
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .approval-step-body {
+                flex-direction: column;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-toggle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ヘッダー -->
+    <header class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-white p-0 me-3 mobile-menu-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <span class="header-title">工事進捗管理ツール</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="header-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="header-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- サイドバー -->
+            <div class="col-md-3 sidebar p-0" id="sidebar">
+                <div class="sidebar-menu">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="dashboard.html" class="nav-link" id="nav-dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>ダッシュボード
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="construction_list.html" class="nav-link" id="nav-ledger">
+                                <i class="fas fa-clipboard-list me-2"></i>工事台帳一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="documents.html" class="nav-link" id="nav-document">
+                                <i class="fas fa-folder me-2"></i>資料一覧
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" class="nav-link active" id="nav-settings" data-bs-toggle="collapse"
+                                data-bs-target="#settings-submenu" aria-expanded="true">
+                                <i class="fas fa-cog me-2"></i>設定
+                                <i class="fas fa-chevron-down ms-auto small"></i>
+                            </a>
+                            <div class="collapse show" id="settings-submenu">
+                                <ul class="nav flex-column ms-3 mt-1">
+                                    <li class="nav-item">
+                                        <a href="workflow_template_list.html" class="nav-link py-2 active"
+                                            id="nav-workflow-templates">
+                                            <i class="fas fa-file-alt me-2"></i>ワークフローテンプレート一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-accounts">
+                                            <i class="fas fa-users me-2"></i>アカウント一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-clients">
+                                            <i class="fas fa-building me-2"></i>取引先一覧
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="#" class="nav-link py-2" id="nav-materials">
+                                            <i class="fas fa-tools me-2"></i>材料マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="employees.html" class="nav-link py-2" id="nav-employees">
+                                            <i class="fas fa-id-card me-2"></i>社員マスタ
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="setting_notification.html" class="nav-link py-2"
+                                            id="nav-notifications">
+                                            <i class="fas fa-bell me-2"></i>通知管理
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- メインコンテンツ -->
+            <div class="col-md-9 p-0">
+                <h4 class="page-header">ワークフローテンプレート作成</h4>
+
+                <div class="content-container">
+                    <div class="section-header">
+                        <h5 class="section-title">新規ワークフローテンプレート</h5>
+                        <a href="workflow_template_list.html" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> 一覧に戻る
+                        </a>
+                    </div>
+
+                    <!-- 基本情報フォーム -->
+                    <div class="form-section">
+                        <h6 class="form-section-title">テンプレート基本情報</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="templateName" class="form-label">テンプレート名 <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="templateName" placeholder="例: 見積書承認テンプレート">
+                                <div class="form-text">分かりやすい名前を付けてください</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="templateType" class="form-label">テンプレート種別 <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-select" id="templateType">
+                                    <option value="">選択してください</option>
+                                    <option>見積書承認</option>
+                                    <option>契約書承認</option>
+                                    <option>工事報告書承認</option>
+                                    <option>納品書承認</option>
+                                    <option>その他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="templateDescription" class="form-label">説明</label>
+                                <textarea class="form-control" id="templateDescription" rows="3"
+                                    placeholder="テンプレートの説明を入力してください"></textarea>
+                                <div class="form-text">このテンプレートの用途や注意点などを記載します</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">ステータス</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="templateStatus" id="statusActive"
+                                        checked>
+                                    <label class="form-check-label" for="statusActive">有効（すぐに使用可能）</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="templateStatus" id="statusDraft">
+                                    <label class="form-check-label" for="statusDraft">下書き（後で編集可能）</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">タグ</label>
+                                <input type="text" class="form-control" placeholder="カンマ区切りでタグを入力">
+                                <div class="form-text">例: 工事関連,承認フロー,重要</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 承認ステップフォーム -->
+                    <div class="form-section">
+                        <h6 class="form-section-title">承認ステップ設定</h6>
+                        <p class="mb-3">承認するユーザーや部門の順序を設定します。ドラッグ＆ドロップで順序を変更できます。</p>
+
+                        <div class="approval-steps-container">
+                            <!-- ステップ1 -->
+                            <div class="approval-step-item">
+                                <div class="approval-step-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="drag-handle me-2">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </div>
+                                        <h6 class="approval-step-title mb-0">ステップ 1</h6>
+                                    </div>
+                                    <div class="approval-step-actions">
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="approval-step-body">
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認タイプ</label>
+                                        <select class="form-select">
+                                            <option>個人承認</option>
+                                            <option>部門承認</option>
+                                            <option>役職承認</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認者</label>
+                                        <select class="form-select">
+                                            <option>部署長</option>
+                                            <option>プロジェクトマネージャー</option>
+                                            <option>現場責任者</option>
+                                            <option>山田 太郎</option>
+                                            <option>佐藤 花子</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">期限設定</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" value="3">
+                                            <span class="input-group-text">日以内</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ステップ2 -->
+                            <div class="approval-step-item">
+                                <div class="approval-step-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="drag-handle me-2">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </div>
+                                        <h6 class="approval-step-title mb-0">ステップ 2</h6>
+                                    </div>
+                                    <div class="approval-step-actions">
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="approval-step-body">
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認タイプ</label>
+                                        <select class="form-select">
+                                            <option>個人承認</option>
+                                            <option selected>部門承認</option>
+                                            <option>役職承認</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認者</label>
+                                        <select class="form-select">
+                                            <option selected>経理部</option>
+                                            <option>法務部</option>
+                                            <option>品質管理部</option>
+                                            <option>資材部</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">期限設定</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" value="5">
+                                            <span class="input-group-text">日以内</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ステップ3 -->
+                            <div class="approval-step-item">
+                                <div class="approval-step-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="drag-handle me-2">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </div>
+                                        <h6 class="approval-step-title mb-0">ステップ 3</h6>
+                                    </div>
+                                    <div class="approval-step-actions">
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="approval-step-body">
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認タイプ</label>
+                                        <select class="form-select">
+                                            <option>個人承認</option>
+                                            <option>部門承認</option>
+                                            <option selected>役職承認</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">承認者</label>
+                                        <select class="form-select">
+                                            <option>部長</option>
+                                            <option selected>最終承認者</option>
+                                            <option>代表取締役</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">期限設定</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" value="7">
+                                            <span class="input-group-text">日以内</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary">
+                                <i class="fas fa-plus-circle me-1"></i> 承認ステップを追加
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 通知設定 -->
+                    <div class="form-section">
+                        <h6 class="form-section-title">通知設定</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="emailNotification" checked>
+                                    <label class="form-check-label" for="emailNotification">メール通知を有効にする</label>
+                                </div>
+                                <div class="form-text mb-3">承認依頼や承認結果をメールで通知します</div>
+
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="reminderNotification" checked>
+                                    <label class="form-check-label" for="reminderNotification">リマインダー通知を有効にする</label>
+                                </div>
+                                <div class="form-text mb-3">期限が近づいた場合にリマインダーを送信します</div>
+
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="completionNotification" checked>
+                                    <label class="form-check-label" for="completionNotification">完了通知を有効にする</label>
+                                </div>
+                                <div class="form-text">承認フロー完了時に関係者全員に通知します</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- アクションボタン -->
+                    <div class="action-buttons">
+                        <a href="workflow_template_list.html" class="btn btn-outline-secondary">キャンセル</a>
+                        <button class="btn btn-outline-primary">下書き保存</button>
+                        <button class="btn btn-primary">テンプレートを作成</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // モバイルメニューの動作
+        $(document).ready(function () {
+            $('#sidebar-toggle').click(function () {
+                $('#sidebar').toggleClass('show');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

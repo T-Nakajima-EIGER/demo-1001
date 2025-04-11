@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工事進捗管理ツール - AIアシスタント</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --slack-purple: #4A154B;
+            --slack-light-purple: #611f69;
+            --slack-green: #2bac76;
+            --slack-light-grey: #f8f8f8;
+            --slack-dark-grey: #1d1c1d;
+            --slack-border: #dddddd;
+            --message-hover: #f6f6f6;
+        }
+
+        body {
+            font-family: 'Lato', 'Noto Sans JP', sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ヘッダー */
+        .slack-header {
+            background-color: var(--slack-purple);
+            color: white;
+            padding: 8px 16px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-workspace {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .header-search {
+            background-color: var(--slack-light-purple);
+            border-radius: 4px;
+            padding: 5px 10px;
+            width: 30%;
+            color: white;
+            border: none;
+        }
+
+        .header-search::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* メインコンテンツ */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            width: 260px;
+            background-color: var(--slack-dark-grey);
+            color: white;
+            padding: 16px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-header {
+            padding: 0 16px;
+            margin-bottom: 4px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-item {
+            padding: 4px 16px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .sidebar-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-item.active {
+            background-color: var(--slack-green);
+            color: white;
+        }
+
+        .sidebar-item i {
+            margin-right: 8px;
+        }
+
+        /* チャット領域 */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .channel-header {
+            height: 48px;
+            border-bottom: 1px solid var(--slack-border);
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .channel-header i {
+            margin-right: 8px;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .message:hover {
+            background-color: var(--message-hover);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            background-color: #ccc;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+        }
+
+        .bot-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            background-color: var(--slack-green);
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-time {
+            color: #616061;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .message-text {
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .message-attachment {
+            margin-top: 8px;
+            border-left: 4px solid #ddd;
+            padding-left: 8px;
+            background-color: #f8f8f8;
+            border-radius: 0 4px 4px 0;
+            padding: 8px 12px;
+        }
+
+        .message-attachment-title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .message-attachment-content {
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .message-attachment-link {
+            display: flex;
+            align-items: center;
+            margin-top: 8px;
+            color: #0576b9;
+            text-decoration: none;
+        }
+
+        .message-attachment-link i {
+            margin-right: 8px;
+        }
+
+        /* 入力エリア */
+        .message-input {
+            border-top: 1px solid var(--slack-border);
+            padding: 16px;
+            background-color: white;
+        }
+
+        .input-container {
+            border: 1px solid var(--slack-border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-area {
+            padding: 8px 12px;
+            min-height: 40px;
+            width: 100%;
+            border: none;
+            resize: none;
+        }
+
+        .input-area:focus {
+            outline: none;
+        }
+
+        .input-actions {
+            padding: 4px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--slack-border);
+        }
+
+        .input-tools {
+            display: flex;
+            gap: 16px;
+        }
+
+        .input-tool {
+            color: #616061;
+            cursor: pointer;
+        }
+
+        .input-tool:hover {
+            color: var(--slack-dark-grey);
+        }
+
+        .send-button {
+            background-color: var(--slack-green);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-weight: bold;
+        }
+
+        /* ファイル表示カード */
+        .file-card {
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+            max-width: 480px;
+        }
+
+        .file-preview {
+            width: 80px;
+            height: 80px;
+            background-color: #f2f2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #666;
+        }
+
+        .file-info {
+            padding: 8px 12px;
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            color: #616061;
+            font-size: 12px;
+        }
+
+        .user-avatar.takahashi {
+            background-color: #2D9CDB;
+        }
+
+        .user-avatar.yamada {
+            background-color: #F2994A;
+        }
+
+        .ai-badge {
+            background-color: var(--slack-green);
+            color: white;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="slack-header">
+        <div class="header-workspace">XXXXX建設</div>
+        <input type="text" class="header-search" placeholder="検索する">
+        <div class="header-icons">
+            <i class="fas fa-user-circle"></i>
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="workspace">
+        <!-- サイドバー -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span>チャンネル</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-hashtag"></i> general
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-hashtag"></i> random
+                </div>
+                <div class="sidebar-item active">
+                    <i class="fas fa-hashtag"></i> 工事進捗管理
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-hashtag"></i> 見積依頼
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-hashtag"></i> 資材調達
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <span>ダイレクトメッセージ</span>
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-circle" style="color: green; font-size: 8px;"></i> 工事進捗AI (あなた)
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-circle" style="color: green; font-size: 8px;"></i> 高橋 誠
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-circle" style="color: green; font-size: 8px;"></i> 山田 太郎
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-circle" style="color: #ccc; font-size: 8px;"></i> 佐藤 花子
+                </div>
+            </div>
+        </div>
+
+        <!-- チャット領域 -->
+        <div class="chat-area">
+            <div class="channel-header">
+                <i class="fas fa-hashtag"></i> 工事進捗管理
+            </div>
+
+            <div class="messages">
+                <!-- メッセージ例 -->
+                <div class="message">
+                    <div class="user-avatar yamada">YT</div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">山田 太郎</span>
+                            <span class="message-time">午前10:23</span>
+                        </div>
+                        <div class="message-text">
+                            @工事進捗AI 工事番号PRJ-2024-0042、工事件名「千代田区オフィスビル改修工事」の2024年12月の見積金額の平均を教えてください。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">工事進捗AI<span class="ai-badge">BOT</span></span>
+                            <span class="message-time">午前10:24</span>
+                        </div>
+                        <div class="message-text">
+                            <p>山田さん、こんにちは。千代田区オフィスビル改修工事（工事番号PRJ-2024-0042）の2024年12月の見積金額の平均は <strong>3,250万円</strong> です。</p>
+                            
+                            <p>以下に関連する見積書ファイルへのリンクを提供します：</p>
+                            
+                            <div class="file-card">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_見積書_20241205.pdf</div>
+                                    <div class="file-meta">2024年12月5日 | 3.2MB | 佐藤花子</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="file-card mt-2">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_見積書改訂版_20241215.pdf</div>
+                                    <div class="file-meta">2024年12月15日 | 3.5MB | 高橋誠</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="user-avatar takahashi">HT</div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">高橋 誠</span>
+                            <span class="message-time">午前10:30</span>
+                        </div>
+                        <div class="message-text">
+                            @工事進捗AI 工事番号PRJ-2024-0042のWBS番号WBS-003に関する資料と最近のタスク進捗を教えてください。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">工事進捗AI<span class="ai-badge">BOT</span></span>
+                            <span class="message-time">午前10:31</span>
+                        </div>
+                        <div class="message-text">
+                            <p>高橋さん、お疲れ様です。PRJ-2024-0042のWBS-003「電気設備工事」に関する情報です：</p>
+                            
+                            <div class="message-attachment">
+                                <div class="message-attachment-title">タスク進捗状況</div>
+                                <div class="message-attachment-content">
+                                    <p>・配線工事：完了（2024/12/10）<br>
+                                    ・照明器具設置：進行中（進捗率85%、完了予定2024/12/25）<br>
+                                    ・分電盤交換：未着手（開始予定2024/12/26）<br>
+                                    ・動作確認テスト：未着手（開始予定2025/01/05）</p>
+                                </div>
+                            </div>
+                            
+                            <p>関連資料は以下の通りです：</p>
+                            
+                            <div class="file-card">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-image"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_WBS-003_配線工事完了写真.jpg</div>
+                                    <div class="file-meta">2024年12月10日 | 4.5MB | 佐藤花子</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-eye"></i> プレビュー
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="file-card mt-2">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-excel"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_WBS-003_資材発注状況.xlsx</div>
+                                    <div class="file-meta">2024年12月18日 | 1.2MB | 山田太郎</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="file-card mt-2">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_WBS-003_電気設備仕様書.docx</div>
+                                    <div class="file-meta">2024年11月25日 | 2.8MB | 田中部長</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="user-avatar yamada">YT</div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">山田 太郎</span>
+                            <span class="message-time">午前10:40</span>
+                        </div>
+                        <div class="message-text">
+                            @工事進捗AI 工事番号PRJ-2024-0042の12月中に期限が切れるタスクを全て教えて。優先度順にリストアップしてください。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <div>
+                            <span class="message-sender">工事進捗AI<span class="ai-badge">BOT</span></span>
+                            <span class="message-time">午前10:41</span>
+                        </div>
+                        <div class="message-text">
+                            <p>山田さん、PRJ-2024-0042「千代田区オフィスビル改修工事」の12月中に期限が切れるタスクを優先度順にリストアップします：</p>
+                            
+                            <div class="message-attachment">
+                                <div class="message-attachment-title">12月期限タスク（優先度順）</div>
+                                <div class="message-attachment-content">
+                                    <p><strong>優先度：高</strong><br>
+                                    1. 照明器具設置完了（WBS-003、期限：2024/12/25、担当：佐藤花子）<br>
+                                    2. 年内施工報告書提出（WBS-001、期限：2024/12/27、担当：山田太郎）<br>
+                                    3. 分電盤資材入荷確認（WBS-003、期限：2024/12/26、担当：鈴木一郎）</p>
+                                    
+                                    <p><strong>優先度：中</strong><br>
+                                    4. 床材発注（WBS-004、期限：2024/12/24、担当：山田太郎）<br>
+                                    5. 1月施工計画書作成（WBS-001、期限：2024/12/29、担当：高橋誠）</p>
+                                    
+                                    <p><strong>優先度：低</strong><br>
+                                    6. 仮設設備撤去（WBS-002、期限：2024/12/30、担当：佐藤花子）<br>
+                                    7. 現場写真整理（WBS-001、期限：2024/12/30、担当：鈴木一郎）</p>
+                                </div>
+                            </div>
+                            
+                            <p>特に注意が必要なのは「照明器具設置完了」タスクです。現在の進捗率は85%ですが、年末休暇前に完了する必要があります。</p>
+                            
+                            <div class="file-card">
+                                <div class="file-preview">
+                                    <i class="fas fa-file-excel"></i>
+                                </div>
+                                <div class="file-info">
+                                    <div class="file-name">PRJ-2024-0042_タスク一覧.xlsx</div>
+                                    <div class="file-meta">2024年12月20日 | 1.5MB | 高橋誠</div>
+                                    <a href="#" class="message-attachment-link">
+                                        <i class="fas fa-download"></i> ダウンロード
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 入力エリア -->
+            <div class="message-input">
+                <div class="input-container">
+                    <textarea class="input-area" placeholder="工事進捗AIにメッセージを送信 (/で利用可能なコマンドを表示)"></textarea>
+                    <div class="input-actions">
+                        <div class="input-tools">
+                            <div class="input-tool"><i class="fas fa-bold"></i></div>
+                            <div class="input-tool"><i class="fas fa-italic"></i></div>
+                            <div class="input-tool"><i class="fas fa-paperclip"></i></div>
+                            <div class="input-tool"><i class="fas fa-at"></i></div>
+                            <div class="input-tool"><i class="far fa-smile"></i></div>
+                        </div>
+                        <button class="send-button">送信</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
